@@ -1,5 +1,5 @@
 package pl.mmilewczyk.userservice.model.enums;
 
-public enum RangeName {
+public enum RankName {
     BROWN, SILVER, GOLD, RUBY
 }

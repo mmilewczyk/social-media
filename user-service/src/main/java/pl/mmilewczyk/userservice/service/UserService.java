@@ -4,10 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import pl.mmilewczyk.userservice.model.dto.RangeDTO;
+import pl.mmilewczyk.userservice.model.dto.RankDTO;
 import pl.mmilewczyk.userservice.model.dto.UserResponse;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
-import pl.mmilewczyk.userservice.model.enums.RangeName;
+import pl.mmilewczyk.userservice.model.enums.RankName;
 import pl.mmilewczyk.userservice.repository.UserRepository;
 
 @Service
@@ -21,6 +21,6 @@ public record UserService(UserRepository userRepository) {
     }
 
     public UserResponseWithId getLoggedInUser() {
-        return new UserResponseWithId(1l, "agiklo", new RangeDTO(RangeName.GOLD, ""));
+        return new UserResponseWithId(1l, "agiklo", "agiklo@mmilewczyk.pl", new RankDTO(RankName.GOLD, ""));
     }
 }

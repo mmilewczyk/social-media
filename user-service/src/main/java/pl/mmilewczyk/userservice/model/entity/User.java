@@ -12,6 +12,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(name = "Users")
 public class User {
 
     @Id
@@ -23,5 +24,8 @@ public class User {
     private String username;
     private String password;
 
-    private Range range;
+    @Enumerated(EnumType.STRING)
+    @ManyToOne
+    @JoinColumn(name = "rank_id")
+    private Rank rank;
 }
