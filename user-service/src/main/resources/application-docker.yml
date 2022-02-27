@@ -1,11 +1,11 @@
 server:
-  port: 8081
+  port: 8082
 spring:
   application:
-    name: post-service
+    name: user-service
   datasource:
     password: password
-    url: jdbc:postgresql://localhost:5435/post-service
+    url: jdbc:postgresql://postgres:5435/user-service
     username: agiklo
   jpa:
     hibernate:
@@ -16,13 +16,11 @@ spring:
         format_sql: true
     show-sql: true
   zipkin:
-    base-url: http://localhost:9411
-  rabbitmq:
-    addresses: localhost:5672
+    base-url: http://zipkin:9411
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://discovery-server:8761/eureka
     fetch-registry: true
     register-with-eureka: true
     enabled: true
