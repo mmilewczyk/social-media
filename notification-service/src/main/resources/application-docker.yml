@@ -1,0 +1,36 @@
+server:
+  port: 8083
+spring:
+  application:
+    name: notification-service
+  datasource:
+    password: password
+    url: jdbc:postgresql://postgres:5435/notification-service
+    username: agiklo
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+  zipkin:
+    base-url: http://zipkin:9411
+  rabbitmq:
+    addresses: rabbitmq:5672
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-server:8761/eureka
+    fetch-registry: true
+    register-with-eureka: true
+    enabled: true
+
+rabbitmq:
+  exchanges:
+    internal: internal.exchange
+  queue:
+    notification: notification.queue
+  routing-keys:
+    internal-notification: internal.notification.routing-key
