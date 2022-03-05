@@ -5,7 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import pl.mmilewczyk.clients.notification.NotificationClient;
+import pl.mmilewczyk.amqp.RabbitMQMessageProducer;
 import pl.mmilewczyk.clients.notification.NotificationRequest;
 import pl.mmilewczyk.clients.user.UserClient;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
@@ -23,7 +23,11 @@ import java.util.List;
 
 @Slf4j
 @Service
-public record PostService(PostRepository postRepository, UserClient userClient, NotificationClient notificationClient, PostMapper postMapper) {
+public record PostService(
+        PostRepository postRepository,
+        UserClient userClient,
+        PostMapper postMapper,
+        RabbitMQMessageProducer rabbitMQMessageProducer) {
 
     public PostResponse createNewPost(PostRequest postRequest) {
         UserResponseWithId user = getCurrentUserFromUserService().getBody();
@@ -52,11 +56,16 @@ public record PostService(PostRepository postRepository, UserClient userClient, 
     }
 
     private void sendNotification(UserResponseWithId userResponseWithId, PostRequest postRequest) {
-        notificationClient.sendNotification(new NotificationRequest(
-                        userResponseWithId.userId(),
-                        userResponseWithId.email(),
-                        String.format("Hi %s, you have just successfully created a new post '%s'",
-                                userResponseWithId.username(), postRequest.title())));
+        NotificationRequest notificationRequest = new NotificationRequest(
+                userResponseWithId.userId(),
+                userResponseWithId.email(),
+                String.format("Hi %s, you have just successfully created a new post '%s'",
+                        userResponseWithId.username(), postRequest.title()));
+
+        rabbitMQMessageProducer.publish(
+                notificationRequest,
+                "internal.exchange",
+                "internal.notification.routing-key");
     }
 
     public Page<PostResponse> getSomeonePostsByUsername(String username, Pageable pageable) {
