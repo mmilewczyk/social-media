@@ -4,12 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.amqp.RabbitMQMessageProducer;
+import pl.mmilewczyk.clients.comment.CommentClient;
+import pl.mmilewczyk.clients.comment.CommentResponse;
 import pl.mmilewczyk.clients.notification.NotificationRequest;
 import pl.mmilewczyk.clients.user.UserClient;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
-import pl.mmilewczyk.postservice.mapper.PostMapper;
 import pl.mmilewczyk.postservice.model.dto.PostRequest;
 import pl.mmilewczyk.postservice.model.dto.PostResponse;
 import pl.mmilewczyk.postservice.model.entity.Post;
@@ -23,14 +25,13 @@ import java.util.List;
 
 @Slf4j
 @Service
-public record PostService(
-        PostRepository postRepository,
-        UserClient userClient,
-        PostMapper postMapper,
-        RabbitMQMessageProducer rabbitMQMessageProducer) {
+public record PostService(PostRepository postRepository,
+                          UserClient userClient,
+                          CommentClient commentClient,
+                          RabbitMQMessageProducer rabbitMQMessageProducer) {
 
     public PostResponse createNewPost(PostRequest postRequest) {
-        UserResponseWithId user = getCurrentUserFromUserService().getBody();
+        UserResponseWithId user = getCurrentUserFromUserService();
 
         assert user != null;
         Post post = Post.builder()
@@ -39,7 +40,7 @@ public record PostService(
                 .body(postRequest.body())
                 .createdAt(LocalDateTime.now())
                 .likes(0L)
-                .comments(Collections.emptyList())
+                .commentsIds(Collections.emptyList())
                 .build();
         if (post.isComplete()) {
             postRepository.save(post);
@@ -48,11 +49,11 @@ public record PostService(
         } else {
             throw new NullPointerException("Fields cannot be empty!");
         }
-        return postMapper.mapPostToPostResponse(post, user);
+        return post.mapToPostResponse(user, null);
     }
 
-    private ResponseEntity<UserResponseWithId> getCurrentUserFromUserService() {
-        return userClient.getLoggedInUser();
+    private UserResponseWithId getCurrentUserFromUserService() {
+        return userClient.getLoggedInUser().getBody();
     }
 
     private void sendNotification(UserResponseWithId userResponseWithId, PostRequest postRequest) {
@@ -69,17 +70,49 @@ public record PostService(
     }
 
     public Page<PostResponse> getSomeonePostsByUsername(String username, Pageable pageable) {
-        UserResponseWithId findedUser = userClient.getUserByUsername(username).getBody();
-        assert findedUser != null;
-        List<Post> posts = postRepository.findAllByAuthorId(findedUser.userId(), pageable);
-        return mapListOfPostsToPageOfPostResponse(posts, findedUser);
+        UserResponseWithId foundUser = getUserByUsername(username);
+        assert foundUser != null;
+        List<Post> posts = postRepository.findAllByAuthorId(foundUser.userId(), pageable);
+        return mapListOfPostsToPageOfPostResponse(posts, foundUser);
+    }
+
+    private UserResponseWithId getUserByUsername(String username) {
+        return userClient.getUserByUsername(username).getBody();
     }
 
     public Page<PostResponse> mapListOfPostsToPageOfPostResponse(List<Post> posts, UserResponseWithId user) {
+        List<CommentResponse> commentResponses = new ArrayList<>();
         List<PostResponse> mappedPosts = new ArrayList<>();
         for (Post post : posts) {
-            mappedPosts.add(postMapper.mapPostToPostResponse(post, user));
+            mapCommentIdsToCommentResponses(post, commentResponses);
+            mappedPosts.add(post.mapToPostResponse(user, commentResponses));
         }
         return new PageImpl<>(mappedPosts);
+    }
+
+    public PostResponse getPostById(Long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        String.format("Post with id: %s does not exist", postId)));
+        UserResponseWithId user = getUserById(post.getAuthorId());
+
+        List<CommentResponse> commentResponses = new ArrayList<>();
+        mapCommentIdsToCommentResponses(post, commentResponses);
+        return post.mapToPostResponse(user, commentResponses);
+    }
+
+    private UserResponseWithId getUserById(Long id) {
+        return userClient.getUserById(id).getBody();
+    }
+
+    private List<CommentResponse> mapCommentIdsToCommentResponses(Post post, List<CommentResponse> commentResponses) {
+        for (Long commentId : post.getCommentsIds()) {
+            commentResponses.add(getCommentById(commentId));
+        }
+        return commentResponses;
+    }
+
+    private CommentResponse getCommentById(Long id) {
+        return commentClient.getCommentById(id).getBody();
     }
 }

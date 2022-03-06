@@ -4,6 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import pl.mmilewczyk.clients.comment.CommentResponse;
+import pl.mmilewczyk.clients.user.UserResponseWithId;
+import pl.mmilewczyk.postservice.model.dto.PostResponse;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -29,10 +32,20 @@ public class Post {
 
     private Long likes;
 
-    @OneToMany
-    private List<Comment> comments;
+    @ElementCollection
+    private List<Long> commentsIds;
 
     public boolean isComplete() {
         return title != null && authorId != null && body != null;
+    }
+
+    public PostResponse mapToPostResponse(UserResponseWithId user, List<CommentResponse> commentResponses) {
+        return new PostResponse(
+                this.getTitle(),
+                user.username(),
+                this.getCreatedAt(),
+                this.getBody(),
+                this.getLikes(),
+                commentResponses);
     }
 }
