@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.mmilewczyk.userservice.model.dto.UserResponse;
@@ -23,5 +24,10 @@ public record UserController(UserService userService) {
     @GetMapping("/loggedInUser")
     public ResponseEntity<UserResponseWithId> getLoggedInUser() {
         return ResponseEntity.status(HttpStatus.OK).body(userService.getLoggedInUser());
+    }
+
+    @GetMapping("/{username}")
+    ResponseEntity<UserResponseWithId> getUserByUsername(@PathVariable("username") String username) {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.getUserByUsername(username));
     }
 }
