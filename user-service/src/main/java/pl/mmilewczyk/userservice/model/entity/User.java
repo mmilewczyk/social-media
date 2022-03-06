@@ -4,6 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import pl.mmilewczyk.userservice.model.dto.RankDTO;
+import pl.mmilewczyk.userservice.model.dto.UserResponse;
+import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
 
 import javax.persistence.*;
 
@@ -28,4 +31,12 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "rank_id")
     private Rank rank;
+
+    public UserResponseWithId mapToUserResponseWithId() {
+        return new UserResponseWithId(this.userId, this.username, this.email, new RankDTO(this.rank.getRankName(), this.rank.getIcon()));
+    }
+
+    public UserResponse mapToUserResponse() {
+        return new UserResponse(this.username, new RankDTO(this.rank.getRankName(), this.rank.getIcon()));
+    }
 }
