@@ -1,4 +1,4 @@
-package pl.mmilewczyk.postservice.model.dto;
+package pl.mmilewczyk.clients.comment;
 
 import java.time.LocalDateTime;
 

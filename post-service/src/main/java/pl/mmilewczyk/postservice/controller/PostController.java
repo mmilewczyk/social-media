@@ -22,4 +22,9 @@ public record PostController(PostService postService) {
     public ResponseEntity<Page<PostResponse>> getSomeonePostsByUsername(@PathVariable("username") String username, Pageable pageable) {
         return ResponseEntity.status(HttpStatus.OK).body(postService.getSomeonePostsByUsername(username, pageable));
     }
+
+    @GetMapping
+    public ResponseEntity<PostResponse> getPostById(@RequestParam("id") Long postId) {
+        return ResponseEntity.status(HttpStatus.OK).body(postService.getPostById(postId));
+    }
 }

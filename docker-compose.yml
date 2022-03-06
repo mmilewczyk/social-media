@@ -10,8 +10,6 @@ services:
       - postgres:/data/postgres
     ports:
       - 5435:5432
-    expose:
-      - 5435
     networks:
       - postgres
     restart: unless-stopped

@@ -41,4 +41,11 @@ public record UserService(UserRepository userRepository) {
                         String.format("User with username: %s does not exist", username)))
                 .mapToUserResponseWithId();
     }
+
+    public UserResponseWithId getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        String.format("User with id: %s does not exist", userId)))
+                .mapToUserResponseWithId();
+    }
 }

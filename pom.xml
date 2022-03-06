@@ -17,6 +17,7 @@
         <module>discovery-server</module>
         <module>api-gateway</module>
         <module>amqp</module>
+        <module>comment-service</module>
     </modules>
 
     <name>social-media</name>

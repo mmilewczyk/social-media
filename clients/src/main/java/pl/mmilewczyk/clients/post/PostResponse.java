@@ -1,5 +1,4 @@
-package pl.mmilewczyk.postservice.model.dto;
-
+package pl.mmilewczyk.clients.post;
 
 import pl.mmilewczyk.clients.comment.CommentResponse;
 
