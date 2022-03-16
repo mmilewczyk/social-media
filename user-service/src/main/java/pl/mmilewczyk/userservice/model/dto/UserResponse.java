@@ -1,5 +1,5 @@
 package pl.mmilewczyk.userservice.model.dto;
 
-public record UserResponse(String username, RankDTO rank) {
+public record UserResponse(String username, String rank) {
 
 }
