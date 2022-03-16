@@ -5,21 +5,33 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import pl.mmilewczyk.userservice.model.dto.RankDTO;
 import pl.mmilewczyk.userservice.model.dto.UserResponse;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
 import pl.mmilewczyk.userservice.model.entity.User;
-import pl.mmilewczyk.userservice.model.enums.RankName;
 import pl.mmilewczyk.userservice.repository.UserRepository;
+import pl.mmilewczyk.userservice.model.entity.ConfirmationToken;
 
+import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
-public record UserService(UserRepository userRepository) {
+public record UserService(
+        UserRepository userRepository,
+        ConfirmationTokenService confirmationTokenService,
+        BCryptPasswordEncoder passwordEncoder
+) implements UserDetailsService {
+
+    private static final String USER_NOT_FOUND_MSG = "user with username %s not found";
 
     public Page<UserResponse> getAllUsers(Pageable pageable) {
         List<UserResponse> mappedUsers = new ArrayList<>();
@@ -30,9 +42,10 @@ public record UserService(UserRepository userRepository) {
         return new PageImpl<>(mappedUsers);
     }
 
-    public UserResponseWithId getLoggedInUser() {
-        // TODO: implement getting logged in user
-        return new UserResponseWithId(1L, "agiklo", "agiklo@mmilewczyk.pl", new RankDTO(RankName.GOLD, ""));
+    public UserResponseWithId getLoggedInUser(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return new UserResponseWithId(user.getUserId(), user.getUsername(), user.getEmail(), user.getRank().name());
     }
 
     public UserResponseWithId getUserByUsername(String username) {
@@ -47,5 +60,46 @@ public record UserService(UserRepository userRepository) {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         String.format("User with id: %s does not exist", userId)))
                 .mapToUserResponseWithId();
+    }
+
+    public int enableUser(String username) {
+        return userRepository.enableUser(username);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUsername(username).orElseThrow(() ->
+                new UsernameNotFoundException(String.format(USER_NOT_FOUND_MSG, username)));
+    }
+
+    public String signUpUser(User user) {
+        checkIfEmailOrUsernameAreNotTaken(user);
+
+        String encodedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(encodedPassword);
+        userRepository.save(user);
+
+        String token = UUID.randomUUID().toString();
+        ConfirmationToken confirmationToken = new ConfirmationToken(
+                token,
+                LocalDateTime.now(),
+                LocalDateTime.now().plusMinutes(15),
+                user);
+
+        confirmationTokenService.saveConfirmationToken(confirmationToken);
+
+        return token;
+    }
+
+    private void checkIfEmailOrUsernameAreNotTaken(User user) {
+        boolean userExists = userRepository.findByUsername(user.getUsername()).isPresent();
+        boolean emailExists = userRepository.findByEmail(user.getEmail()).isPresent();
+
+        if (userExists) {
+            throw new IllegalStateException(String.format("Username %s already taken", user.getUsername()));
+        }
+        if (emailExists) {
+            throw new IllegalStateException(String.format("Email %s already taken", user.getEmail()));
+        }
     }
 }

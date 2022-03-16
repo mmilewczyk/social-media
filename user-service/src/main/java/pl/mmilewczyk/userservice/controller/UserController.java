@@ -9,6 +9,8 @@ import pl.mmilewczyk.userservice.model.dto.UserResponse;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
 import pl.mmilewczyk.userservice.service.UserService;
 
+import java.security.Principal;
+
 @RestController
 @RequestMapping("api/v1/users")
 public record UserController(UserService userService) {
@@ -19,8 +21,8 @@ public record UserController(UserService userService) {
     }
 
     @GetMapping("/loggedInUser")
-    public ResponseEntity<UserResponseWithId> getLoggedInUser() {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.getLoggedInUser());
+    public ResponseEntity<UserResponseWithId> getLoggedInUser(Principal principal) {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.getLoggedInUser(principal));
     }
 
     @GetMapping("/{username}")
@@ -28,8 +30,8 @@ public record UserController(UserService userService) {
         return ResponseEntity.status(HttpStatus.OK).body(userService.getUserByUsername(username));
     }
 
-    @GetMapping
-    ResponseEntity<UserResponseWithId> getUserById(@RequestParam("id") Long userId) {
+    @GetMapping("/search/id/{id}")
+    ResponseEntity<UserResponseWithId> getUserById(@PathVariable("id") Long userId) {
         return ResponseEntity.status(HttpStatus.OK).body(userService.getUserById(userId));
     }
 }
