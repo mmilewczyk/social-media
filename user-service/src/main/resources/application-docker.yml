@@ -24,3 +24,8 @@ eureka:
     fetch-registry: true
     register-with-eureka: true
     enabled: true
+jwt:
+  private-key: "strongstrongstrongstrongstrongstrongstrongstrongstrongstrongstrongstrongstrongstrongstrongstrongstrongstrong"
+  authorizationHeader: "Authorization"
+  tokenPrefix: "Bearer "
+  tokenExpirationAfterDays: 14
