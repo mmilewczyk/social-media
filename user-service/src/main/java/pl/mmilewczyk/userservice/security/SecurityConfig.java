@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import pl.mmilewczyk.userservice.model.enums.RoleName;
 import pl.mmilewczyk.userservice.security.jwt.JwtConfiguration;
 import pl.mmilewczyk.userservice.security.jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import pl.mmilewczyk.userservice.security.jwt.JwtUsernameAndPasswordAuthorizationFilter;
@@ -35,12 +36,22 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http)
             throws Exception {
-        http.csrf().disable() //disable only for coding process
+        http.csrf().disable()
                 .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfiguration, secretKey))
-                .addFilterAfter(new JwtUsernameAndPasswordAuthorizationFilter(secretKey, jwtConfiguration), JwtUsernameAndPasswordAuthenticationFilter.class);
+                .addFilterAfter(new JwtUsernameAndPasswordAuthorizationFilter(secretKey, jwtConfiguration), JwtUsernameAndPasswordAuthenticationFilter.class)
+                .authorizeRequests()
+                .antMatchers("/").permitAll()
+                .antMatchers("/swagger-ui.html").permitAll()
+                .antMatchers("/api/v1/registration/**").permitAll()
+                .antMatchers("/api/v1/login/**").permitAll()
+                .antMatchers("/api/**").hasAnyAuthority(
+                        RoleName.ADMIN.name(),
+                        RoleName.MODERATOR.name(),
+                        RoleName.USER.name())
+                .anyRequest().permitAll();
     }
 
     @Bean
