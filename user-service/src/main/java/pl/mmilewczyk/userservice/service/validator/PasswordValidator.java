@@ -1,10 +1,10 @@
-package pl.mmilewczyk.userservice.service;
+package pl.mmilewczyk.userservice.service.validator;
 
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.regex.Pattern;
 
-@Service
+@Component
 public class PasswordValidator {
 
     public boolean validatePassword(String password, String matchingPassword) {
