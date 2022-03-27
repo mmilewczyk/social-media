@@ -4,12 +4,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import pl.mmilewczyk.userservice.model.dto.UserResponse;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
 import pl.mmilewczyk.userservice.service.UserService;
-
-import java.security.Principal;
 
 @RestController
 @RequestMapping("api/v1/users")
@@ -21,8 +22,8 @@ public record UserController(UserService userService) {
     }
 
     @GetMapping("/loggedInUser")
-    public ResponseEntity<UserResponseWithId> getLoggedInUser(Principal principal) {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.getLoggedInUser(principal));
+    public ResponseEntity<UserResponseWithId> getLoggedInUser() {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.getLoggedInUser());
     }
 
     @GetMapping("/{username}")

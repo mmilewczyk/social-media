@@ -119,6 +119,22 @@ services:
       - postgres
       - rabbitmq
 
+  comment-service:
+    image: agiklo/comment-service:latest
+    container_name: comment-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - spring
+      - postgres
+    depends_on:
+      - zipkin
+      - discovery-server
+      - postgres
+      - rabbitmq
+
 networks:
   postgres:
     driver: bridge

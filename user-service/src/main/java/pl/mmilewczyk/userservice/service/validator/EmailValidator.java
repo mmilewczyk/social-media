@@ -1,11 +1,11 @@
-package pl.mmilewczyk.userservice.service;
+package pl.mmilewczyk.userservice.service.validator;
 
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-@Service
+@Component
 public class EmailValidator implements Predicate<String> {
 
     @Override

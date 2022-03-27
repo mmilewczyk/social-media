@@ -1,5 +1,6 @@
 package pl.mmilewczyk.userservice.service;
 
+import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -10,25 +11,26 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.userservice.model.dto.UserResponse;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
 import pl.mmilewczyk.userservice.model.entity.User;
 import pl.mmilewczyk.userservice.repository.UserRepository;
-import pl.mmilewczyk.userservice.model.entity.ConfirmationToken;
+import pl.mmilewczyk.userservice.security.JwtUtils;
 
-import java.security.Principal;
-import java.time.LocalDateTime;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @Slf4j
 public record UserService(
         UserRepository userRepository,
         ConfirmationTokenService confirmationTokenService,
-        BCryptPasswordEncoder passwordEncoder
+        BCryptPasswordEncoder passwordEncoder,
+        JwtUtils jwtUtils
 ) implements UserDetailsService {
 
     private static final String USER_NOT_FOUND_MSG = "user with username %s not found";
@@ -42,10 +44,21 @@ public record UserService(
         return new PageImpl<>(mappedUsers);
     }
 
-    public UserResponseWithId getLoggedInUser(Principal principal) {
-        User user = userRepository.findByUsername(principal.getName()).orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    public UserResponseWithId getLoggedInUser() {
+        String username = getUsernameFromJwtToken();
+        User user = userRepository.findByUsername(username).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         return new UserResponseWithId(user.getUserId(), user.getUsername(), user.getEmail(), user.getRank().name());
+    }
+
+    private String getUsernameFromJwtToken() {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        String token = request.getHeader("Authorization").split(" ")[1];
+        return Jwts.parser()
+                .setSigningKey(jwtUtils.getSecretKey())
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
     public UserResponseWithId getUserByUsername(String username) {
@@ -62,44 +75,9 @@ public record UserService(
                 .mapToUserResponseWithId();
     }
 
-    public int enableUser(String username) {
-        return userRepository.enableUser(username);
-    }
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByUsername(username).orElseThrow(() ->
                 new UsernameNotFoundException(String.format(USER_NOT_FOUND_MSG, username)));
-    }
-
-    public String signUpUser(User user) {
-        checkIfEmailOrUsernameAreNotTaken(user);
-
-        String encodedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encodedPassword);
-        userRepository.save(user);
-
-        String token = UUID.randomUUID().toString();
-        ConfirmationToken confirmationToken = new ConfirmationToken(
-                token,
-                LocalDateTime.now(),
-                LocalDateTime.now().plusMinutes(15),
-                user);
-
-        confirmationTokenService.saveConfirmationToken(confirmationToken);
-
-        return token;
-    }
-
-    private void checkIfEmailOrUsernameAreNotTaken(User user) {
-        boolean userExists = userRepository.findByUsername(user.getUsername()).isPresent();
-        boolean emailExists = userRepository.findByEmail(user.getEmail()).isPresent();
-
-        if (userExists) {
-            throw new IllegalStateException(String.format("Username %s already taken", user.getUsername()));
-        }
-        if (emailExists) {
-            throw new IllegalStateException(String.format("Email %s already taken", user.getEmail()));
-        }
     }
 }
