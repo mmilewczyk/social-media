@@ -1,5 +1,5 @@
 package pl.mmilewczyk.userservice.model.enums;
 
 public enum RankName {
-    BROWN, SILVER, GOLD, RUBY
+    BRONZE, SILVER, GOLD, SAPPHIRE, RUBY, EMERALD, AMETHYST, PEARL, OBSIDIAN, DIAMOND
 }

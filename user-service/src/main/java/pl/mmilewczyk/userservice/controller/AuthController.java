@@ -3,9 +3,9 @@ package pl.mmilewczyk.userservice.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import pl.mmilewczyk.userservice.model.dto.LoginRequest;
 import pl.mmilewczyk.userservice.model.dto.RegistrationRequest;
-import pl.mmilewczyk.userservice.model.dto.SuccessfulAuthDto;
+import pl.mmilewczyk.userservice.model.dto.auth.LoginRequest;
+import pl.mmilewczyk.userservice.model.dto.auth.SuccessfulAuthDto;
 import pl.mmilewczyk.userservice.service.AuthService;
 
 import javax.servlet.http.HttpServletResponse;

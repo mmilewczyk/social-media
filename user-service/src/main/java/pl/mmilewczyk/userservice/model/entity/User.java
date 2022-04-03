@@ -1,22 +1,23 @@
 package pl.mmilewczyk.userservice.model.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import pl.mmilewczyk.userservice.model.dto.UserResponse;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
-import pl.mmilewczyk.userservice.model.enums.RankName;
-import pl.mmilewczyk.userservice.model.enums.RoleName;
+import pl.mmilewczyk.userservice.model.enums.*;
 
 import javax.persistence.*;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,8 +30,13 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_id_sequence")
     private Long userId;
 
+    @Column(nullable = false)
     private String email;
+
+    @Column(nullable = false)
     private String username;
+
+    @Column(nullable = false)
     private String password;
 
     @Column(name = "is_locked")
@@ -46,6 +52,48 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private RankName rank;
 
+    private String aboutMe;
+
+    @Column(nullable = false)
+    private String firstName;
+
+    @Column(nullable = false)
+    private LocalDate birth;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
+    @Column(nullable = false)
+    private String currentCity;
+
+    @Column(nullable = false)
+    private String homeTown;
+
+    @OneToMany
+    private List<Language> languagesImLearning;
+
+    @OneToMany
+    @Column(nullable = false)
+    private List<Language> languagesISpeak;
+
+    @ElementCollection
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private List<LookingFor> lookingFor;
+
+    @ManyToOne
+    @JoinColumn(name = "education_id")
+    private Education education;
+
+    private String occupationOrJob;
+
+    @Enumerated(EnumType.STRING)
+    private RelationshipStatus relationshipStatus;
+
+    @ElementCollection
+    private List<Long> friendsIds;
+
     public User(String email, String username, String password, RoleName userRole, RankName rank) {
         this.email = email;
         this.username = username;
@@ -54,12 +102,53 @@ public class User implements UserDetails {
         this.rank = rank;
     }
 
-    public UserResponseWithId mapToUserResponseWithId() {
-        return new UserResponseWithId(this.userId, this.username, this.email, this.rank.name());
+    public User(String email,
+                String username,
+                String password,
+                RoleName userRole,
+                RankName rank,
+                String firstName,
+                LocalDate birth,
+                Gender gender,
+                String currentCity,
+                String homeTown,
+                List<Language> languagesISpeak,
+                List<LookingFor> lookingFor) {
+        this.email = email;
+        this.username = username;
+        this.password = password;
+        this.userRole = userRole;
+        this.rank = rank;
+        this.firstName = firstName;
+        this.birth = birth;
+        this.gender = gender;
+        this.currentCity = currentCity;
+        this.homeTown = homeTown;
+        this.languagesISpeak = languagesISpeak;
+        this.lookingFor = lookingFor;
     }
 
-    public UserResponse mapToUserResponse() {
-        return new UserResponse(this.username, this.rank.name());
+    public UserResponseWithId mapToUserResponseWithId() {
+        return new UserResponseWithId(
+                this.userId,
+                this.username,
+                this.email,
+                this.rank.name(),
+                this.firstName,
+                calculateAge(this.birth),
+                this.currentCity,
+                this.homeTown,
+                this.languagesImLearning,
+                this.languagesISpeak,
+                this.lookingFor,
+                this.education,
+                this.relationshipStatus,
+                this.aboutMe,
+                this.friendsIds);
+    }
+
+    private String calculateAge(LocalDate birthdate) {
+        return String.valueOf(Period.between(birthdate, LocalDate.now()).getYears());
     }
 
     @Override

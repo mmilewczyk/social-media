@@ -10,9 +10,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import pl.mmilewczyk.userservice.model.dto.LoginRequest;
 import pl.mmilewczyk.userservice.model.dto.RegistrationRequest;
-import pl.mmilewczyk.userservice.model.dto.SuccessfulAuthDto;
+import pl.mmilewczyk.userservice.model.dto.auth.LoginRequest;
+import pl.mmilewczyk.userservice.model.dto.auth.SuccessfulAuthDto;
 import pl.mmilewczyk.userservice.model.entity.ConfirmationToken;
 import pl.mmilewczyk.userservice.model.entity.User;
 import pl.mmilewczyk.userservice.model.enums.RankName;
@@ -87,7 +87,19 @@ public class AuthService {
         validatorService.validatePasswordAndEmail(request);
 
         String encodedPassword = passwordEncoder.encode(CharBuffer.wrap(request.password()));
-        User user = new User(request.email(), request.username(), encodedPassword, RoleName.USER, RankName.BROWN);
+        User user = new User(
+                request.email(),
+                request.username(),
+                encodedPassword,
+                RoleName.USER,
+                RankName.BRONZE,
+                request.firstName(),
+                request.birthday(),
+                request.gender(),
+                request.currentCity(),
+                request.hometown(),
+                request.languageISpeak(),
+                request.lookingFor());
 
         validatorService.checkIfEmailOrUsernameAreNotTaken(user);
         userRepository.save(user);
@@ -126,6 +138,7 @@ public class AuthService {
         userRepository.enableUser(username);
     }
 
+    //only for development purpose
     public void deleteAllUsers() {
         confirmationTokenService.confirmationTokenRepository().deleteAll();
         userRepository.deleteAll();

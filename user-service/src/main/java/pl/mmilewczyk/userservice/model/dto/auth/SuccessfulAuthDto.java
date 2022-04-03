@@ -1,4 +1,4 @@
-package pl.mmilewczyk.userservice.model.dto;
+package pl.mmilewczyk.userservice.model.dto.auth;
 
 import lombok.Builder;
 
