@@ -7,9 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.mmilewczyk.userservice.model.dto.UserEditRequest;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
-import pl.mmilewczyk.userservice.model.entity.Language;
 import pl.mmilewczyk.userservice.model.enums.Gender;
-import pl.mmilewczyk.userservice.model.enums.LookingFor;
 import pl.mmilewczyk.userservice.service.UserService;
 
 import java.util.List;
@@ -45,11 +43,8 @@ public record UserController(UserService userService) {
 
     @GetMapping("/search")
     public ResponseEntity<List<UserResponseWithId>> getUsersByFilter(@RequestParam(required = false) Gender gender,
-                                                                     @RequestParam(required = false) String currentCity,
-                                                                     @RequestParam(required = false) List<Language> languagesImLearning,
-                                                                     @RequestParam(required = false) List<Language> languagesISpeak,
-                                                                     @RequestParam(required = false) List<LookingFor> lookingFor) {
-        return ResponseEntity.ok(userService.getUsersByFilter(gender, currentCity, languagesImLearning, languagesISpeak, lookingFor));
+                                                                     @RequestParam(required = false) String currentCity) {
+        return ResponseEntity.ok(userService.getUsersByFilter(gender, currentCity));
     }
 
     @PutMapping("/profile/{userId}")

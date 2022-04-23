@@ -15,4 +15,10 @@ public record NotificationConsumer(NotificationService notificationService) {
         log.info("Consumed {} from queue", notificationRequest);
         notificationService.send(notificationRequest);
     }
+
+    @RabbitListener(queues = "${rabbitmq.queue.notification}")
+    public void send(String toEmail, String link) {
+        log.info("Queue consumed confirmation link: '{}' and it's sending it to the {}", link, toEmail);
+        notificationService.sendAccountConfirmationEmail(toEmail, link);
+    }
 }
