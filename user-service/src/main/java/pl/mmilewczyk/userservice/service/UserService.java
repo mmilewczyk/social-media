@@ -16,10 +16,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.userservice.model.dto.UserEditRequest;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
-import pl.mmilewczyk.userservice.model.entity.Language;
 import pl.mmilewczyk.userservice.model.entity.User;
 import pl.mmilewczyk.userservice.model.enums.Gender;
-import pl.mmilewczyk.userservice.model.enums.LookingFor;
 import pl.mmilewczyk.userservice.repository.UserRepository;
 import pl.mmilewczyk.userservice.security.JwtUtils;
 
@@ -108,6 +106,7 @@ public record UserService(
         user.setOccupationOrJob(userEditRequest.occupationOrJob());
         user.setRelationshipStatus(userEditRequest.relationshipStatus());
         user.setAboutMe(userEditRequest.aboutMe());
+        user.setNotifyAboutComments(userEditRequest.notifyAboutComments());
 
         Long loggedInUserId = getLoggedInUser().userId();
         log.debug("Checking if logged in user is the owner of the account");
@@ -137,12 +136,8 @@ public record UserService(
         return loggedInUser.mapToUserResponseWithId();
     }
 
-    public List<UserResponseWithId> getUsersByFilter(Gender gender, String currentCity,
-                                                     List<Language> languagesImLearning,
-                                                     List<Language> languagesISpeak,
-                                                     List<LookingFor> lookingFor) {
-        List<User> users = userRepository.findAllByGenderOrCurrentCityOrLanguagesImLearningOrLanguagesISpeakOrLookingFor(
-                gender, currentCity, languagesImLearning, languagesISpeak, lookingFor);
+    public List<UserResponseWithId> getUsersByFilter(Gender gender, String currentCity) {
+        List<User> users = userRepository.findAllByGenderOrCurrentCity(gender, currentCity);
 
         List<UserResponseWithId> mappedUsers = new ArrayList<>();
         users.forEach(user -> mappedUsers.add(user.mapToUserResponseWithId()));

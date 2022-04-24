@@ -4,6 +4,7 @@ import pl.mmilewczyk.userservice.model.entity.Education;
 import pl.mmilewczyk.userservice.model.entity.Language;
 import pl.mmilewczyk.userservice.model.enums.LookingFor;
 import pl.mmilewczyk.userservice.model.enums.RelationshipStatus;
+import pl.mmilewczyk.userservice.model.enums.RoleName;
 
 import java.util.List;
 
@@ -21,5 +22,7 @@ public record UserResponseWithId(Long userId,
                                  Education education,
                                  RelationshipStatus relationshipStatus,
                                  String aboutMe,
-                                 List<Long> friendsIds) {
+                                 List<Long> friendsIds,
+                                 Boolean notifyAboutComments,
+                                 RoleName userRole) {
 }

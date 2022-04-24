@@ -10,6 +10,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import pl.mmilewczyk.clients.notification.NotificationClient;
 import pl.mmilewczyk.userservice.model.dto.RegistrationRequest;
 import pl.mmilewczyk.userservice.model.dto.auth.LoginRequest;
 import pl.mmilewczyk.userservice.model.dto.auth.SuccessfulAuthDto;
@@ -17,6 +18,7 @@ import pl.mmilewczyk.userservice.model.entity.ConfirmationToken;
 import pl.mmilewczyk.userservice.model.entity.User;
 import pl.mmilewczyk.userservice.model.enums.RankName;
 import pl.mmilewczyk.userservice.model.enums.RoleName;
+import pl.mmilewczyk.userservice.repository.LanguageRepository;
 import pl.mmilewczyk.userservice.repository.UserRepository;
 import pl.mmilewczyk.userservice.security.JwtUtils;
 import pl.mmilewczyk.userservice.service.validator.ValidatorService;
@@ -38,6 +40,8 @@ public class AuthService {
     private final ConfirmationTokenService confirmationTokenService;
     private final ValidatorService validatorService;
     private final JwtUtils jwtUtils;
+    private final NotificationClient notificationClient;
+    private final LanguageRepository languageRepository;
 
     public SuccessfulAuthDto signIn(LoginRequest loginRequest, HttpServletResponse response) {
         User user = userRepository.findByUsername(loginRequest.username())
@@ -102,14 +106,15 @@ public class AuthService {
                 request.lookingFor());
 
         validatorService.checkIfEmailOrUsernameAreNotTaken(user);
+        languageRepository.saveAll(request.languageISpeak());
         userRepository.save(user);
 
         String token = UUID.randomUUID().toString();
         ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), user);
         confirmationTokenService.saveConfirmationToken(confirmationToken);
 
-        String link = String.format("ACTIVATE ACCOUNT BY LINK: http://localhost:8082/api/v1/auth/confirm?token=%s", token);
-        log.info(link);
+        String link = String.format("http://localhost:8082/api/v1/auth/confirm?token=%s", token);
+        notificationClient.sendAccountConfirmationEmail(user.getEmail(), link);
 
         return new SuccessfulAuthDto(user.getUserId(), user.getUsername(), null);
     }
