@@ -17,4 +17,19 @@ public record NotificationController(NotificationService notificationService) {
     public void sendAccountConfirmationEmail(@RequestParam String toEmail, @RequestParam String url) {
         notificationService.sendAccountConfirmationEmail(toEmail, url);
     }
+
+    @PostMapping("/newComment")
+    public void sendEmailAboutNewComment(@RequestBody NotificationRequest notificationRequest) {
+        notificationService.sendEmailAboutNewComment(notificationRequest);
+    }
+
+    @PostMapping("/deletedComment")
+    void sendEmailToTheCommentAuthorAboutDeletionOfComment(NotificationRequest notificationRequest){
+        notificationService.sendEmailToTheCommentAuthorAboutDeletionOfComment(notificationRequest);
+    }
+
+    @PostMapping("/deletedPost")
+    void sendEmailToThePostAuthorAboutDeletionOfPost(NotificationRequest notificationRequest) {
+        notificationService.sendEmailToThePostAuthorAboutDeletionOfPost(notificationRequest);
+    }
 }

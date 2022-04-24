@@ -93,6 +93,8 @@ public class User implements UserDetails {
     @ElementCollection
     private List<Long> friendsIds;
 
+    private Boolean notifyAboutComments;
+
     public User(String email, String username, String password, RoleName userRole, RankName rank) {
         this.email = email;
         this.username = username;
@@ -125,6 +127,7 @@ public class User implements UserDetails {
         this.homeTown = homeTown;
         this.languagesISpeak = languagesISpeak;
         this.lookingFor = lookingFor;
+        this.notifyAboutComments = true;
     }
 
     public UserResponseWithId mapToUserResponseWithId() {
@@ -143,7 +146,9 @@ public class User implements UserDetails {
                 this.education,
                 this.relationshipStatus,
                 this.aboutMe,
-                this.friendsIds);
+                this.friendsIds,
+                this.notifyAboutComments,
+                this.userRole);
     }
 
     private String calculateAge(LocalDate birthdate) {

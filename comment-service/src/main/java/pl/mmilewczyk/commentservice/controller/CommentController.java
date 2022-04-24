@@ -29,4 +29,10 @@ public record CommentController(CommentService commentService) {
     ResponseEntity<Page<CommentResponse>> getAllCommentsOfThePost(@RequestParam("postId") Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(commentService.getAllCommentsOfThePost(id));
     }
+
+    @DeleteMapping("/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void deleteCommentById(@PathVariable("commentId") Long commentId) {
+        commentService.deleteCommentById(commentId);
+    }
 }

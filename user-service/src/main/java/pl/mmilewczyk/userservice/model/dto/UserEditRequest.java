@@ -22,5 +22,6 @@ public record UserEditRequest(String username,
                               Education education,
                               String occupationOrJob,
                               RelationshipStatus relationshipStatus,
-                              String aboutMe) {
+                              String aboutMe,
+                              Boolean notifyAboutComments) {
 }

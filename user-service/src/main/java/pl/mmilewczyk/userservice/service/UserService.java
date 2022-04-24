@@ -106,6 +106,7 @@ public record UserService(
         user.setOccupationOrJob(userEditRequest.occupationOrJob());
         user.setRelationshipStatus(userEditRequest.relationshipStatus());
         user.setAboutMe(userEditRequest.aboutMe());
+        user.setNotifyAboutComments(userEditRequest.notifyAboutComments());
 
         Long loggedInUserId = getLoggedInUser().userId();
         log.debug("Checking if logged in user is the owner of the account");

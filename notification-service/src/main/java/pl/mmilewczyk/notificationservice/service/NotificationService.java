@@ -45,4 +45,37 @@ public record NotificationService(NotificationRepository notificationRepository,
         mailSender.send(message);
         log.info("Confirmation email to {} has been sent", toEmail);
     }
+
+    public void sendEmailAboutNewComment(NotificationRequest notificationRequest) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(APPLICATION_EMAIL);
+        message.setTo(notificationRequest.toUserEmail());
+        message.setSubject("Someone commented on your post! Check it out");
+        message.setText(notificationRequest.message());
+        log.info("Sending a email about new comment to {}", notificationRequest.toUserEmail());
+        mailSender.send(message);
+        log.info("Email about new comment to {} has been sent", notificationRequest.toUserEmail());
+    }
+
+    public void sendEmailToTheCommentAuthorAboutDeletionOfComment(NotificationRequest notificationRequest) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(APPLICATION_EMAIL);
+        message.setTo(notificationRequest.toUserEmail());
+        message.setSubject("Your comment has been removed by our team.");
+        message.setText(notificationRequest.message());
+        log.info("Sending a email about deletion of comment to {}", notificationRequest.toUserEmail());
+        mailSender.send(message);
+        log.info("Email about deletion of comment to {} has been sent", notificationRequest.toUserEmail());
+    }
+
+    public void sendEmailToThePostAuthorAboutDeletionOfPost(NotificationRequest notificationRequest) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(APPLICATION_EMAIL);
+        message.setTo(notificationRequest.toUserEmail());
+        message.setSubject("Your post has been removed by our team.");
+        message.setText(notificationRequest.message());
+        log.info("Sending a email about deletion of post to {}", notificationRequest.toUserEmail());
+        mailSender.send(message);
+        log.info("Email about deletion of post to {} has been sent", notificationRequest.toUserEmail());
+    }
 }
