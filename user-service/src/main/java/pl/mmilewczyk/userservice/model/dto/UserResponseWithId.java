@@ -22,7 +22,8 @@ public record UserResponseWithId(Long userId,
                                  Education education,
                                  RelationshipStatus relationshipStatus,
                                  String aboutMe,
-                                 List<Long> friendsIds,
+                                 Long followers,
+                                 Long followed,
                                  Boolean notifyAboutComments,
                                  RoleName userRole) {
 }
