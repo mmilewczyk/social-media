@@ -1,6 +1,5 @@
 package pl.mmilewczyk.userservice.service;
 
-import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -9,30 +8,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.userservice.model.dto.UserEditRequest;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
 import pl.mmilewczyk.userservice.model.entity.User;
 import pl.mmilewczyk.userservice.model.enums.Gender;
 import pl.mmilewczyk.userservice.repository.UserRepository;
-import pl.mmilewczyk.userservice.security.JwtUtils;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @Slf4j
-public record UserService(
-        UserRepository userRepository,
-        ConfirmationTokenService confirmationTokenService,
-        BCryptPasswordEncoder passwordEncoder,
-        JwtUtils jwtUtils
-) implements UserDetailsService {
+public record UserService(UserRepository userRepository,
+                          UtilsService utilsService) implements UserDetailsService {
 
     private static final String USER_NOT_FOUND_MSG = "user with username %s not found";
 
@@ -45,26 +35,6 @@ public record UserService(
         return new PageImpl<>(mappedUsers);
     }
 
-    public UserResponseWithId getLoggedInUser() {
-        String username = getUsernameFromJwtToken();
-        User user = userRepository.findByUsername(username).orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return user.mapToUserResponseWithId();
-    }
-
-    private String getUsernameFromJwtToken() {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-        String token = request.getHeader("Authorization").split(" ")[1];
-        if (token == null) {
-            throw new NullPointerException("Token is null");
-        }
-        return Jwts.parser()
-                .setSigningKey(jwtUtils.getSecretKey())
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-    }
-
     public UserResponseWithId getUserByUsername(String username) {
         log.debug("Searching the user with username: {}", username);
         return userRepository.findByUsername(username)
@@ -73,7 +43,7 @@ public record UserService(
                 .mapToUserResponseWithId();
     }
 
-    public UserResponseWithId getUserById(Long userId) {
+    public UserResponseWithId getUserByUserId(Long userId) {
         log.debug("Searching the user with id: {}", userId);
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -108,7 +78,7 @@ public record UserService(
         user.setAboutMe(userEditRequest.aboutMe());
         user.setNotifyAboutComments(userEditRequest.notifyAboutComments());
 
-        Long loggedInUserId = getLoggedInUser().userId();
+        Long loggedInUserId = utilsService.getLoggedInUser().userId();
         log.debug("Checking if logged in user is the owner of the account");
         if (loggedInUserId.equals(user.getUserId())) {
             log.info("Saving the data: {} of the {}({}) user", userEditRequest, user.getUsername(), user.getUserId());
@@ -122,26 +92,12 @@ public record UserService(
         return user.mapToUserResponseWithId();
     }
 
-    public UserResponseWithId addUserToFriends(Long userId) {
-        User loggedInUser = userRepository.findById(getLoggedInUser().userId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format("User with id: %s does not exist", userId)));
-        User potencialFriend = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format("User with id: %s does not exist", userId)));
-
-        List<Long> friends = loggedInUser.getFriendsIds();
-        friends.add(potencialFriend.getUserId());
-        userRepository.save(loggedInUser);
-        return loggedInUser.mapToUserResponseWithId();
-    }
-
-    public List<UserResponseWithId> getUsersByFilter(Gender gender, String currentCity) {
+    public Page<UserResponseWithId> getUsersByFilter(Gender gender, String currentCity) {
         List<User> users = userRepository.findAllByGenderOrCurrentCity(gender, currentCity);
 
         List<UserResponseWithId> mappedUsers = new ArrayList<>();
         users.forEach(user -> mappedUsers.add(user.mapToUserResponseWithId()));
-        return mappedUsers;
+        return new PageImpl<>(mappedUsers);
     }
 
     //TODO: CREATE REPORT USER TO MODERATOR FUNCTION

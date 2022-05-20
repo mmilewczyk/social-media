@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import pl.mmilewczyk.clients.comment.CommentResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 import pl.mmilewczyk.postservice.model.dto.PostResponse;
+import pl.mmilewczyk.postservice.model.dto.PostResponseLite;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -39,13 +40,22 @@ public class Post {
         return title != null && authorId != null && body != null;
     }
 
-    public PostResponse mapToPostResponse(UserResponseWithId user, List<CommentResponse> commentResponses) {
+    public PostResponse mapToPostResponse(UserResponseWithId author, List<CommentResponse> commentResponses) {
         return new PostResponse(
                 this.getTitle(),
-                user.username(),
+                author.username(),
                 this.getCreatedAt(),
                 this.getBody(),
                 this.getLikes(),
                 commentResponses);
+    }
+
+    public PostResponseLite mapToPostResponseLite(UserResponseWithId author) {
+        return new PostResponseLite(
+                this.getTitle(),
+                author.username(),
+                this.getCreatedAt(),
+                this.getBody(),
+                this.getLikes());
     }
 }

@@ -90,8 +90,10 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private RelationshipStatus relationshipStatus;
 
-    @ElementCollection
-    private List<Long> friendsIds;
+    private Long followersAmount;
+
+    private Long followedAmount;
+
 
     private Boolean notifyAboutComments;
 
@@ -146,7 +148,8 @@ public class User implements UserDetails {
                 this.education,
                 this.relationshipStatus,
                 this.aboutMe,
-                this.friendsIds,
+                this.followersAmount,
+                this.followedAmount,
                 this.notifyAboutComments,
                 this.userRole);
     }

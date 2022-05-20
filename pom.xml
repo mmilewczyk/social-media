@@ -18,6 +18,7 @@
         <module>api-gateway</module>
         <module>amqp</module>
         <module>comment-service</module>
+        <module>chat-service</module>
     </modules>
 
     <name>social-media</name>

@@ -9,12 +9,11 @@ import pl.mmilewczyk.userservice.model.dto.UserEditRequest;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
 import pl.mmilewczyk.userservice.model.enums.Gender;
 import pl.mmilewczyk.userservice.service.UserService;
-
-import java.util.List;
+import pl.mmilewczyk.userservice.service.UtilsService;
 
 @RestController
 @RequestMapping("api/v1/users")
-public record UserController(UserService userService) {
+public record UserController(UserService userService, UtilsService utilsService) {
 
     @GetMapping
     public ResponseEntity<Page<UserResponseWithId>> getAllUsers(Pageable pageable) {
@@ -23,7 +22,7 @@ public record UserController(UserService userService) {
 
     @GetMapping("/profile")
     public ResponseEntity<UserResponseWithId> getLoggedInUser() {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.getLoggedInUser());
+        return ResponseEntity.status(HttpStatus.OK).body(utilsService.getLoggedInUser());
     }
 
     @GetMapping("/profile/{username}")
@@ -33,7 +32,7 @@ public record UserController(UserService userService) {
 
     @GetMapping("/search/id/{id}")
     public ResponseEntity<UserResponseWithId> getUserById(@PathVariable("id") Long userId) {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.getUserById(userId));
+        return ResponseEntity.status(HttpStatus.OK).body(userService.getUserByUserId(userId));
     }
 
     @PutMapping("/profile/edit")
@@ -42,13 +41,9 @@ public record UserController(UserService userService) {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<UserResponseWithId>> getUsersByFilter(@RequestParam(required = false) Gender gender,
+    public ResponseEntity<Page<UserResponseWithId>> getUsersByFilter(@RequestParam(required = false) Gender gender,
                                                                      @RequestParam(required = false) String currentCity) {
         return ResponseEntity.ok(userService.getUsersByFilter(gender, currentCity));
     }
-
-    @PutMapping("/profile/{userId}")
-    public ResponseEntity<UserResponseWithId> addUserToFriends(@PathVariable("userId") Long userId) {
-        return ResponseEntity.ok(userService.addUserToFriends(userId));
-    }
 }
+
