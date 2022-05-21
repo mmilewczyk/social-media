@@ -8,31 +8,38 @@ import pl.mmilewczyk.clients.comment.CommentResponse;
 import pl.mmilewczyk.commentservice.model.dto.CommentRequest;
 import pl.mmilewczyk.commentservice.service.CommentService;
 
+import static org.springframework.http.ResponseEntity.status;
+
 @RestController
 @RequestMapping(path = "api/v1/comments")
 public record CommentController(CommentService commentService) {
 
     @GetMapping("/{commentId}")
     ResponseEntity<CommentResponse> getCommentById(@PathVariable("commentId") Long id) {
-        return ResponseEntity.status(HttpStatus.OK).body(commentService.getCommentById(id));
+        return status(HttpStatus.OK).body(commentService.getCommentResponseById(id));
     }
 
     @PostMapping("/{postId}")
     ResponseEntity<CommentResponse> addNewCommentToThePost(
             @RequestBody CommentRequest commentRequest,
             @PathVariable("postId") Long id) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(commentService.createNewComment(commentRequest, id));
+        return status(HttpStatus.CREATED).body(commentService.createNewComment(commentRequest, id));
     }
 
     @GetMapping
     ResponseEntity<Page<CommentResponse>> getAllCommentsOfThePost(@RequestParam("postId") Long id) {
-        return ResponseEntity.status(HttpStatus.OK).body(commentService.getAllCommentsOfThePost(id));
+        return status(HttpStatus.OK).body(commentService.getAllCommentsOfThePost(id));
     }
 
     @DeleteMapping("/{commentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     void deleteCommentById(@PathVariable("commentId") Long commentId) {
         commentService.deleteCommentById(commentId);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CommentResponse> editCommentById(@PathVariable("id") Long commentId,
+                                                           @RequestBody CommentRequest commentRequest) {
+        return status(HttpStatus.CREATED).body(commentService.editCommentById(commentId, commentRequest));
     }
 }

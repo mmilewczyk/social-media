@@ -32,6 +32,8 @@ public class Comment {
 
     private Long likes;
 
+    private boolean wasEdited;
+
     public CommentResponse mapToCommentResponse(UserResponseWithId user) {
         return new CommentResponse(user.username(), this.createdAt, this.body, this.likes);
     }
