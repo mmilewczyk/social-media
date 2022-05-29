@@ -33,4 +33,10 @@ public class GroupController {
     public ResponseEntity<GroupResponse> getGroupById(@PathVariable("groupId") Long groupId) {
         return status(HttpStatus.FOUND).body(groupService.getGroupById(groupId));
     }
+
+    @DeleteMapping("/{groupId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteGroupById(@PathVariable("groupId") Long groupId) {
+        groupService.deleteGroupById(groupId);
+    }
 }

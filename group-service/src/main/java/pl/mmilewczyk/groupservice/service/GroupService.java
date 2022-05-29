@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
+import pl.mmilewczyk.clients.user.enums.RoleName;
 import pl.mmilewczyk.groupservice.model.dto.GroupRequest;
 import pl.mmilewczyk.groupservice.model.dto.GroupResponse;
 import pl.mmilewczyk.groupservice.model.dto.GroupResponseLite;
@@ -82,5 +83,21 @@ public class GroupService {
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         String.format(GROUP_NOT_FOUND_ALERT, groupId)));
         return mapGroupToGroupResponse(group);
+    }
+
+    public void deleteGroupById(Long groupId) {
+        GroupResponse group = getGroupById(groupId);
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        if (group.author().userId().equals(currentUser.userId()) || isUserAdminOrModerator(currentUser)) {
+            groupRepository.deleteById(groupId);
+            if (isUserAdminOrModerator(currentUser)) {
+                // todo: sendEmailToTheGroupAuthorAboutDeletionOfGroup(groupId);
+            }
+        }
+    }
+
+    private Boolean isUserAdminOrModerator(UserResponseWithId user) {
+        RoleName userRole = user.userRole();
+        return userRole.equals(RoleName.ADMIN) || userRole.equals(RoleName.MODERATOR);
     }
 }
