@@ -39,4 +39,14 @@ public class GroupController {
     public void deleteGroupById(@PathVariable("groupId") Long groupId) {
         groupService.deleteGroupById(groupId);
     }
+
+    @PutMapping("/join/{groupId}")
+    public ResponseEntity<GroupResponse> joinToGroup(@PathVariable("groupId") Long groupId) {
+        return status(HttpStatus.OK).body(groupService.joinToGroup(groupId));
+    }
+
+    @PutMapping("/leave/{groupId}")
+    public ResponseEntity<GroupResponse> leaveGroup(@PathVariable("groupId") Long groupId) {
+        return status(HttpStatus.OK).body(groupService.leaveGroup(groupId));
+    }
 }

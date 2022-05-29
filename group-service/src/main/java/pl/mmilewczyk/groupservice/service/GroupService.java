@@ -100,4 +100,34 @@ public class GroupService {
         RoleName userRole = user.userRole();
         return userRole.equals(RoleName.ADMIN) || userRole.equals(RoleName.MODERATOR);
     }
+
+    public GroupResponse joinToGroup(Long groupId) {
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        Group group = groupRepository.findById(groupId).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        String.format(GROUP_NOT_FOUND_ALERT, groupId)));
+        if (group.getMembersIds().contains(currentUser.userId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
+                    String.format("You are already member of the group %s", groupId));
+        } else {
+            group.getMembersIds().add(currentUser.userId());
+            groupRepository.save(group);
+        }
+        return mapGroupToGroupResponse(group);
+    }
+
+    public GroupResponse leaveGroup(Long groupId) {
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        Group group = groupRepository.findById(groupId).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        String.format(GROUP_NOT_FOUND_ALERT, groupId)));
+        if (group.getMembersIds().contains(currentUser.userId())) {
+            group.getMembersIds().remove(currentUser.userId());
+            groupRepository.save(group);
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
+                    String.format("You are not a member of the group %s", groupId));
+        }
+        return mapGroupToGroupResponse(group);
+    }
 }
