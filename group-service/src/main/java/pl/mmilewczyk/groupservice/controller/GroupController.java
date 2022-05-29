@@ -49,4 +49,10 @@ public class GroupController {
     public ResponseEntity<GroupResponse> leaveGroup(@PathVariable("groupId") Long groupId) {
         return status(HttpStatus.OK).body(groupService.leaveGroup(groupId));
     }
+
+    @PutMapping("/edit/add/moderator")
+    public ResponseEntity<GroupResponse> makeSomeoneAModerator(@RequestParam Long groupId,
+                                                               @RequestParam Long userId) {
+        return status(HttpStatus.OK).body(groupService.makeSomeoneAModerator(groupId, userId));
+    }
 }

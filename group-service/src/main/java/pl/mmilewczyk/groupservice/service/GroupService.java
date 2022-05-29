@@ -130,4 +130,24 @@ public class GroupService {
         }
         return mapGroupToGroupResponse(group);
     }
+
+    public GroupResponse makeSomeoneAModerator(Long groupId, Long userId) {
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        UserResponseWithId user = utilsService.getUserById(userId);
+        Group group = groupRepository.findById(groupId).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        String.format(GROUP_NOT_FOUND_ALERT, groupId)));
+        if (group.getAuthorId().equals(currentUser.userId())) {
+            if (group.getModeratorsIds().contains(userId)) {
+                throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, String.format(
+                        "User %s is aldread a moderator of the group %s", user.username(), groupId));
+            } else {
+                group.getModeratorsIds().add(userId);
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not owner of the group");
+        }
+        return mapGroupToGroupResponse(group);
+    }
+
 }
