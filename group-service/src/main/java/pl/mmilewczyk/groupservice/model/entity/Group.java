@@ -1,6 +1,7 @@
 package pl.mmilewczyk.groupservice.model.entity;
 
 import lombok.*;
+import pl.mmilewczyk.groupservice.model.dto.GroupResponseLite;
 
 import javax.persistence.*;
 import java.util.List;
@@ -37,6 +38,16 @@ public class Group {
 
     public boolean isComplete() {
         return groupName != null && authorId != null && description != null;
+    }
+
+    public GroupResponseLite mapGroupToGroupResponseLite() {
+        return new GroupResponseLite(
+                this.getGroupId(),
+                this.getGroupName(),
+                this.getDescription(),
+                (long) this.getPostsIds().size(),
+                (long) this.getMembersIds().size(),
+                (long) this.getEventsIds().size());
     }
 
     public Group(String groupName, String description, Long authorId) {
