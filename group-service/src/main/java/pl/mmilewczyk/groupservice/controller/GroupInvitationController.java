@@ -20,8 +20,13 @@ public class GroupInvitationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(groupInvitationService.inviteSomeoneToGroup(groupId, userId));
     }
 
-    @PutMapping
+    @PutMapping("/accept")
     public ResponseEntity<GroupResponse> acceptInvitation(@RequestParam Long groupInvitationId) {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(groupInvitationService.acceptInvitationToGroup(groupInvitationId));
+    }
+
+    @PutMapping("/reject")
+    public ResponseEntity<GroupResponse> rejectInvitation(@RequestParam Long groupInvitationId) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(groupInvitationService.rejectInvitationToGroup(groupInvitationId));
     }
 }
