@@ -31,7 +31,7 @@ public class GroupController {
 
     @GetMapping("/{groupId}")
     public ResponseEntity<GroupResponse> getGroupById(@PathVariable("groupId") Long groupId) {
-        return status(HttpStatus.FOUND).body(groupService.getGroupById(groupId));
+        return status(HttpStatus.FOUND).body(groupService.getGroupResponseById(groupId));
     }
 
     @DeleteMapping("/{groupId}")
@@ -54,5 +54,11 @@ public class GroupController {
     public ResponseEntity<GroupResponse> makeSomeoneAModerator(@RequestParam Long groupId,
                                                                @RequestParam Long userId) {
         return status(HttpStatus.OK).body(groupService.makeSomeoneAModerator(groupId, userId));
+    }
+
+    @PutMapping("/remove-user")
+    public ResponseEntity<GroupResponse> removeSomeoneFromGroup(@RequestParam Long groupId,
+                                                                @RequestParam Long userToRemoveId) {
+        return status(HttpStatus.OK).body(groupService.removeSomeoneFromGroup(groupId, userToRemoveId));
     }
 }

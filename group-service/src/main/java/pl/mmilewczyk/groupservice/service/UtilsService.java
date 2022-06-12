@@ -8,6 +8,7 @@ import pl.mmilewczyk.clients.post.PostClient;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserClient;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
+import pl.mmilewczyk.clients.user.enums.RoleName;
 
 @Service
 @RequiredArgsConstructor
@@ -41,5 +42,10 @@ public class UtilsService {
         PostResponse post = postClient.getPostById(postId).getBody();
         if (post != null) return post;
         else throw new ResponseStatusException(HttpStatus.NOT_FOUND, POST_NOT_FOUND_ALERT);
+    }
+
+    Boolean isUserAdminOrModerator(UserResponseWithId user) {
+        RoleName userRole = user.userRole();
+        return userRole.equals(RoleName.ADMIN) || userRole.equals(RoleName.MODERATOR);
     }
 }

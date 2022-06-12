@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
-import pl.mmilewczyk.clients.user.enums.RoleName;
 import pl.mmilewczyk.groupservice.model.dto.GroupRequest;
 import pl.mmilewczyk.groupservice.model.dto.GroupResponse;
 import pl.mmilewczyk.groupservice.model.dto.GroupResponseLite;
@@ -44,19 +43,7 @@ public class GroupService {
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "All fields should be filed");
         }
-        return mapGroupToGroupResponse(newGroup);
-    }
-
-    private GroupResponse mapGroupToGroupResponse(Group group) {
-        return new GroupResponse(
-                group.getGroupId(),
-                group.getGroupName(),
-                group.getDescription(),
-                mapListOfPostResponseByPostsIds(group.getPostsIds()),
-                utilsService.getUserById(group.getAuthorId()),
-                mapListOfUserResponseLiteByUsersIds(group.getModeratorsIds()),
-                mapListOfUserResponseLiteByUsersIds(group.getMembersIds()),
-                group.getEventsIds());
+        return getGroupResponseById(newGroup.getGroupId());
     }
 
     private List<PostResponse> mapListOfPostResponseByPostsIds(Collection<Long> postIds) {
@@ -78,49 +65,33 @@ public class GroupService {
         return new PageImpl<>(mappedGroups);
     }
 
-    public GroupResponse getGroupById(Long groupId) {
-        Group group = groupRepository.findById(groupId).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format(GROUP_NOT_FOUND_ALERT, groupId)));
-        return mapGroupToGroupResponse(group);
-    }
-
     public void deleteGroupById(Long groupId) {
-        GroupResponse group = getGroupById(groupId);
+        GroupResponse group = getGroupResponseById(groupId);
         UserResponseWithId currentUser = utilsService.getCurrentUser();
-        if (group.author().userId().equals(currentUser.userId()) || isUserAdminOrModerator(currentUser)) {
+        if (group.author().userId().equals(currentUser.userId()) || utilsService.isUserAdminOrModerator(currentUser)) {
             groupRepository.deleteById(groupId);
-            if (isUserAdminOrModerator(currentUser)) {
+            if (utilsService.isUserAdminOrModerator(currentUser)) {
                 // todo: sendEmailToTheGroupAuthorAboutDeletionOfGroup(groupId);
             }
         }
     }
 
-    private Boolean isUserAdminOrModerator(UserResponseWithId user) {
-        RoleName userRole = user.userRole();
-        return userRole.equals(RoleName.ADMIN) || userRole.equals(RoleName.MODERATOR);
-    }
-
     public GroupResponse joinToGroup(Long groupId) {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
-        Group group = groupRepository.findById(groupId).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format(GROUP_NOT_FOUND_ALERT, groupId)));
-        if (group.getMembersIds().contains(currentUser.userId())) {
+        Group group = getGroupById(groupId);
+        if (group.isUserAMemberOfGroup(currentUser)) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
                     String.format("You are already member of the group %s", groupId));
         } else {
             group.getMembersIds().add(currentUser.userId());
             groupRepository.save(group);
         }
-        return mapGroupToGroupResponse(group);
+        return getGroupResponseById(groupId);
     }
 
     public GroupResponse leaveGroup(Long groupId) {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
-        Group group = groupRepository.findById(groupId).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format(GROUP_NOT_FOUND_ALERT, groupId)));
+        Group group = getGroupById(groupId);
         if (group.getMembersIds().contains(currentUser.userId())) {
             group.getMembersIds().remove(currentUser.userId());
             groupRepository.save(group);
@@ -128,26 +99,70 @@ public class GroupService {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
                     String.format("You are not a member of the group %s", groupId));
         }
-        return mapGroupToGroupResponse(group);
+        return getGroupResponseById(groupId);
     }
 
     public GroupResponse makeSomeoneAModerator(Long groupId, Long userId) {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         UserResponseWithId user = utilsService.getUserById(userId);
-        Group group = groupRepository.findById(groupId).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format(GROUP_NOT_FOUND_ALERT, groupId)));
+        Group group = getGroupById(groupId);
         if (group.getAuthorId().equals(currentUser.userId())) {
             if (group.getModeratorsIds().contains(userId)) {
                 throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, String.format(
                         "User %s is aldread a moderator of the group %s", user.username(), groupId));
             } else {
                 group.getModeratorsIds().add(userId);
+                groupRepository.save(group);
             }
         } else {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not owner of the group");
         }
-        return mapGroupToGroupResponse(group);
+        return getGroupResponseById(groupId);
+    }
+
+    public GroupResponse removeSomeoneFromGroup(Long groupId, Long userToRemoveId) {
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        Group group = getGroupById(groupId);
+        if (group.getMembersIds().contains(userToRemoveId)) {
+            if (group.getModeratorsIds().contains(userToRemoveId) || group.getAuthorId().equals(userToRemoveId)) {
+                if (group.getAuthorId().equals(currentUser.userId())) {
+                    group.getModeratorsIds().remove(userToRemoveId);
+                    group.getMembersIds().remove(userToRemoveId);
+                    groupRepository.save(group);
+                } else {
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not the group owner to remove a moderator");
+                }
+            } else if (group.getModeratorsIds().contains(currentUser.userId()) || group.getAuthorId().equals(currentUser.userId())) {
+                group.getModeratorsIds().remove(userToRemoveId);
+                group.getMembersIds().remove(userToRemoveId);
+                groupRepository.save(group);
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "The user you are trying to remove is not a member of the group");
+        }
+        return getGroupResponseById(groupId);
+    }
+
+    public GroupResponse getGroupResponseById(Long groupId) {
+        return mapGroupToGroupResponse(getGroupById(groupId));
+    }
+
+    private Group getGroupById(Long groupId) {
+        return groupRepository.findById(groupId).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        String.format(GROUP_NOT_FOUND_ALERT, groupId)));
+    }
+
+    private GroupResponse mapGroupToGroupResponse(Group group) {
+        return new GroupResponse(
+                group.getGroupId(),
+                group.getGroupName(),
+                group.getDescription(),
+                mapListOfPostResponseByPostsIds(group.getPostsIds()),
+                utilsService.getUserById(group.getAuthorId()),
+                mapListOfUserResponseLiteByUsersIds(group.getModeratorsIds()),
+                mapListOfUserResponseLiteByUsersIds(group.getMembersIds()),
+                group.getEventsIds());
     }
 
 }
