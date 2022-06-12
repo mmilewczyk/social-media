@@ -19,6 +19,8 @@ public class GroupInvitationService {
     private final GroupInvitationRepository groupInvitationRepository;
     private final GroupService groupService;
 
+    private static final String GROUP_INVITATION_NOT_FOUND_ALERT = "The requested group invitation with id %s was not found.";
+
     public GroupInvitationRequest inviteSomeoneToGroup(Long groupId, Long userId) {
         UserResponseWithId inviter = utilsService.getCurrentUser();
         UserResponseWithId invitee = utilsService.getUserById(userId);
@@ -45,5 +47,29 @@ public class GroupInvitationService {
         }
         assert groupInvitation != null;
         return groupInvitation.mapGroupInvitationToGroupInvitationRequest(group, inviter, invitee);
+    }
+
+    public GroupResponse acceptInvitationToGroup(Long groupInvitationId) {
+        GroupInvitation groupInvitation = groupInvitationRepository.findById(groupInvitationId).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        String.format(GROUP_INVITATION_NOT_FOUND_ALERT, groupInvitationId)));
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        if (groupInvitation.getInviteeId().equals(currentUser.userId()) || utilsService.isUserAdminOrModerator(currentUser)) {
+            switch (groupInvitation.getStatus()) {
+                case REJECTED -> throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
+                        "You have already rejected the invitation to group " + groupInvitation.getGroupId());
+                case INVITED -> {
+                    groupInvitation.setStatus(InvitationStatus.ACCEPTED);
+                    groupInvitationRepository.save(groupInvitation);
+                    groupService.joinToGroup(groupInvitation.getGroupId());
+                }
+                case ACCEPTED -> throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
+                        "You have already accepted the invitation to group " + groupInvitation.getGroupId());
+            }
+        } else {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "You are not invited to group " + groupInvitation.getGroupId());
+        }
+        return groupService.getGroupResponseById(groupInvitation.getGroupId());
     }
 }
