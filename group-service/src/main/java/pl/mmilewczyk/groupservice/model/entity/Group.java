@@ -1,6 +1,7 @@
 package pl.mmilewczyk.groupservice.model.entity;
 
 import lombok.*;
+import pl.mmilewczyk.clients.user.UserResponseWithId;
 import pl.mmilewczyk.groupservice.model.dto.GroupResponseLite;
 
 import javax.persistence.*;
@@ -64,5 +65,9 @@ public class Group {
         this.moderatorsIds = moderatorsIds;
         this.membersIds = membersIds;
         this.eventsIds = eventsIds;
+    }
+
+    public boolean isUserAMemberOfGroup(UserResponseWithId userResponseWithId) {
+        return this.getMembersIds().contains(userResponseWithId.userId());
     }
 }

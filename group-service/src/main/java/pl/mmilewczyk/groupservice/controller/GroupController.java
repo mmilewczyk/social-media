@@ -31,7 +31,7 @@ public class GroupController {
 
     @GetMapping("/{groupId}")
     public ResponseEntity<GroupResponse> getGroupById(@PathVariable("groupId") Long groupId) {
-        return status(HttpStatus.FOUND).body(groupService.getGroupById(groupId));
+        return status(HttpStatus.FOUND).body(groupService.getGroupResponseById(groupId));
     }
 
     @DeleteMapping("/{groupId}")

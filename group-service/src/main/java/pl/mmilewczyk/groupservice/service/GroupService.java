@@ -78,7 +78,7 @@ public class GroupService {
         return new PageImpl<>(mappedGroups);
     }
 
-    public GroupResponse getGroupById(Long groupId) {
+    public GroupResponse getGroupResponseById(Long groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         String.format(GROUP_NOT_FOUND_ALERT, groupId)));
@@ -86,7 +86,7 @@ public class GroupService {
     }
 
     public void deleteGroupById(Long groupId) {
-        GroupResponse group = getGroupById(groupId);
+        GroupResponse group = getGroupResponseById(groupId);
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         if (group.author().userId().equals(currentUser.userId()) || isUserAdminOrModerator(currentUser)) {
             groupRepository.deleteById(groupId);
@@ -106,7 +106,7 @@ public class GroupService {
         Group group = groupRepository.findById(groupId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         String.format(GROUP_NOT_FOUND_ALERT, groupId)));
-        if (group.getMembersIds().contains(currentUser.userId())) {
+        if (group.isUserAMemberOfGroup(currentUser)) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
                     String.format("You are already member of the group %s", groupId));
         } else {
@@ -143,6 +143,7 @@ public class GroupService {
                         "User %s is aldread a moderator of the group %s", user.username(), groupId));
             } else {
                 group.getModeratorsIds().add(userId);
+                groupRepository.save(group);
             }
         } else {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not owner of the group");
