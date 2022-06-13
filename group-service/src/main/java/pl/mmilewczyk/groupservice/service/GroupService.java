@@ -146,9 +146,7 @@ public class GroupService {
     public GroupResponse editGroup(Long groupId, GroupRequest groupRequest) {
         Group group = getGroupById(groupId);
         UserResponseWithId currentUser = utilsService.getCurrentUser();
-        if (utilsService.isUserAdminOrModerator(currentUser) ||
-                group.getModeratorsIds().contains(currentUser.userId()) ||
-                group.getAuthorId().equals(currentUser.userId())) {
+        if (isGroupAdminOrModerator(currentUser, group)) {
             if (groupRequest.groupName() != null && !groupRequest.groupName().isEmpty()) {
                 group.setGroupName(groupRequest.groupName());
             }
@@ -160,6 +158,26 @@ public class GroupService {
         return getGroupResponseById(groupId);
     }
 
+    public GroupResponse removeGroupMembersPost(Long groupId, Long postId) {
+        Group group = getGroupById(groupId);
+        if (group.getPostsIds().contains(postId)) {
+            UserResponseWithId currentUser = utilsService.getCurrentUser();
+            if (isGroupAdminOrModerator(currentUser, group)) {
+                group.getPostsIds().remove(postId);
+                groupRepository.save(group);
+                return getGroupResponseById(groupId);
+            }
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not owner or moderator of the group");
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                String.format("Post with id %s does not exist in group %s", postId, groupId));
+    }
+
+    private boolean isGroupAdminOrModerator(UserResponseWithId user, Group group) {
+        return utilsService.isUserAdminOrModerator(user) ||
+                group.getModeratorsIds().contains(user.userId()) ||
+                group.getAuthorId().equals(user.userId());
+    }
 
     public GroupResponse getGroupResponseById(Long groupId) {
         return mapGroupToGroupResponse(getGroupById(groupId));

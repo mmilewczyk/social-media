@@ -66,4 +66,9 @@ public class GroupController {
     public ResponseEntity<GroupResponse> editGroup(@RequestBody GroupRequest groupRequest, @PathVariable Long groupId) {
         return status(HttpStatus.CREATED).body(groupService.editGroup(groupId, groupRequest));
     }
+
+    @PutMapping("/edit/posts/remove")
+    public ResponseEntity<GroupResponse> removeGroupMembersPost(@RequestParam Long groupId, @RequestParam Long postId) {
+        return status(HttpStatus.ACCEPTED).body(groupService.removeGroupMembersPost(groupId, postId));
+    }
 }
