@@ -61,4 +61,9 @@ public class GroupController {
                                                                 @RequestParam Long userToRemoveId) {
         return status(HttpStatus.OK).body(groupService.removeSomeoneFromGroup(groupId, userToRemoveId));
     }
+
+    @PutMapping("/edit/{groupId}")
+    public ResponseEntity<GroupResponse> editGroup(@RequestBody GroupRequest groupRequest, @PathVariable Long groupId) {
+        return status(HttpStatus.CREATED).body(groupService.editGroup(groupId, groupRequest));
+    }
 }

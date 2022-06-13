@@ -143,6 +143,24 @@ public class GroupService {
         return getGroupResponseById(groupId);
     }
 
+    public GroupResponse editGroup(Long groupId, GroupRequest groupRequest) {
+        Group group = getGroupById(groupId);
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        if (utilsService.isUserAdminOrModerator(currentUser) ||
+                group.getModeratorsIds().contains(currentUser.userId()) ||
+                group.getAuthorId().equals(currentUser.userId())) {
+            if (groupRequest.groupName() != null && !groupRequest.groupName().isEmpty()) {
+                group.setGroupName(groupRequest.groupName());
+            }
+            if (groupRequest.description() != null) {
+                group.setDescription(groupRequest.description());
+            }
+            groupRepository.save(group);
+        }
+        return getGroupResponseById(groupId);
+    }
+
+
     public GroupResponse getGroupResponseById(Long groupId) {
         return mapGroupToGroupResponse(getGroupById(groupId));
     }
