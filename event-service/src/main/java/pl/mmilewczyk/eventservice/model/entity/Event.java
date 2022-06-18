@@ -1,6 +1,9 @@
 package pl.mmilewczyk.eventservice.model.entity;
 
 import lombok.*;
+import pl.mmilewczyk.clients.post.PostResponse;
+import pl.mmilewczyk.clients.user.UserResponseWithId;
+import pl.mmilewczyk.eventservice.model.dto.EventResponse;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -12,6 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
+@Builder
 public class Event {
 
     @Id
@@ -35,5 +39,46 @@ public class Event {
     private List<Long> attendeesIds;
 
     @ElementCollection
+    private List<Long> moderatorsIds;
+
+    @ElementCollection
     private List<Long> postsIds;
+
+    public Event(String name, LocalDateTime startAt, LocalDateTime endAt, String location, Long organizerId, Boolean isPrivate, String description, List<String> hashtags, List<Long> attendeesIds, List<Long> moderatorsIds, List<Long> postsIds) {
+        this.name = name;
+        this.startAt = startAt;
+        this.endAt = endAt;
+        this.location = location;
+        this.organizerId = organizerId;
+        this.isPrivate = isPrivate;
+        this.description = description;
+        this.hashtags = hashtags;
+        this.attendeesIds = attendeesIds;
+        this.moderatorsIds = moderatorsIds;
+        this.postsIds = postsIds;
+    }
+
+    public Boolean areDatesCorrect() {
+        return this.startAt.isBefore(this.endAt);
+    }
+
+    public EventResponse mapEventToEventResponse(UserResponseWithId organizer,
+                                                 List<UserResponseWithId> attendees,
+                                                 List<UserResponseWithId> moderators,
+                                                 List<PostResponse> posts) {
+        return new EventResponse(
+                this.eventId,
+                this.name,
+                this.startAt,
+                this.endAt,
+                this.location,
+                organizer,
+                this.isPrivate,
+                this.description,
+                this.hashtags,
+                attendees,
+                moderators,
+                posts);
+
+    }
 }
