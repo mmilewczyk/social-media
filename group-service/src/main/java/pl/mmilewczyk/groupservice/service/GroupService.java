@@ -120,6 +120,23 @@ public class GroupService {
         return getGroupResponseById(groupId);
     }
 
+    public GroupResponse deleteSomeoneAsAModerator(Long groupId, Long userId) {
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        UserResponseWithId user = utilsService.getUserById(userId);
+        Group group = getGroupById(groupId);
+        if (!group.getAuthorId().equals(currentUser.userId())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not owner of the group");
+        }
+        if (!group.getModeratorsIds().contains(userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, String.format(
+                    "User %s is aldread not a moderator of the group %s", user.username(), groupId));
+        }
+        group.getModeratorsIds().remove(userId);
+        groupRepository.save(group);
+
+        return getGroupResponseById(groupId);
+    }
+
     public GroupResponse removeSomeoneFromGroup(Long groupId, Long userToRemoveId) {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         Group group = getGroupById(groupId);

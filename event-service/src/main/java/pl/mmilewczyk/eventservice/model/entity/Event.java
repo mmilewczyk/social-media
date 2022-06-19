@@ -4,6 +4,7 @@ import lombok.*;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 import pl.mmilewczyk.eventservice.model.dto.EventResponse;
+import pl.mmilewczyk.eventservice.model.dto.PrivateEventResponse;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -80,5 +81,25 @@ public class Event {
                 moderators,
                 posts);
 
+    }
+
+    public PrivateEventResponse mapEventToPrivateEventResponse(UserResponseWithId organizer) {
+        return new PrivateEventResponse(
+                this.eventId,
+                this.name,
+                this.startAt,
+                this.endAt,
+                this.location,
+                organizer,
+                this.isPrivate,
+                this.description,
+                this.hashtags,
+                (long) this.attendeesIds.size(),
+                (long) this.postsIds.size());
+
+    }
+
+    public boolean isUserAMemberOfEvent(UserResponseWithId userResponseWithId) {
+        return this.getAttendeesIds().contains(userResponseWithId.userId());
     }
 }
