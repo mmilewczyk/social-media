@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
+import pl.mmilewczyk.clients.user.enums.RoleName;
 import pl.mmilewczyk.eventservice.model.dto.EventRequest;
 import pl.mmilewczyk.eventservice.model.dto.EventResponse;
 import pl.mmilewczyk.eventservice.model.dto.PrivateEventResponse;
@@ -78,7 +79,7 @@ public class EventService {
         return getEventResponseById(eventId);
     }
 
-    public EventResponse deleteSomeoneAsAModerator(Long eventId, Long userId) {
+    public EventResponse removeSomeoneAsAModerator(Long eventId, Long userId) {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         UserResponseWithId user = utilsService.getUserById(userId);
         Event event = getEventById(eventId);
@@ -92,6 +93,31 @@ public class EventService {
         event.getModeratorsIds().remove(userId);
         eventRepository.save(event);
 
+        return getEventResponseById(eventId);
+    }
+
+    public EventResponse editEvent(Long eventId, EventRequest eventRequest) {
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        Event event = getEventById(eventId);
+
+        if (!event.getOrganizerId().equals(currentUser.userId()) ||
+                !currentUser.userRole().equals(RoleName.MODERATOR) ||
+                !currentUser.userRole().equals(RoleName.ADMIN)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only the organizer can edit the event");
+        }
+        event.setName(eventRequest.name());
+        event.setStartAt(eventRequest.startAt());
+        event.setEndAt(eventRequest.endAt());
+        event.setLocation(eventRequest.location());
+        event.setIsPrivate(eventRequest.isPrivate());
+        event.setDescription(eventRequest.description());
+        event.setHashtags(eventRequest.hashtags());
+        eventRepository.saveAndFlush(event);
+        if (event.getIsPrivate().booleanValue() == Boolean.FALSE) {
+            eventRequestToJoinService.getPendingRequestsToPrivateJoin(eventId).get()
+                    .forEach(request -> eventRequestToJoinService
+                            .acceptRequestToJoinToPrivateEvent(request.eventRequestToJoinId()));
+        }
         return getEventResponseById(eventId);
     }
 

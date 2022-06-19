@@ -32,4 +32,32 @@ public class EventController {
     public ResponseEntity<EventResponse> makeSomeoneAModerator(@RequestParam Long eventId, @RequestParam Long userId) {
         return status(OK).body(eventService.makeSomeoneAModerator(eventId, userId));
     }
+
+    @PutMapping("/edit/remove/moderator")
+    public ResponseEntity<EventResponse> removeSomeoneAsAModerator(@RequestParam Long eventId, @RequestParam Long userId) {
+        return status(OK).body(eventService.removeSomeoneAsAModerator(eventId, userId));
+    }
+
+    @PutMapping("/edit/{eventId}")
+    public ResponseEntity<EventResponse> editEvent(@PathVariable("eventId") Long eventId, @RequestBody EventRequest eventRequest) {
+        return status(CREATED).body(eventService.editEvent(eventId, eventRequest));
+    }
+
+    @PutMapping("/join/{eventId}")
+    public ResponseEntity<Object> joinToEvent(@PathVariable("eventId") Long eventId) {
+        return status(OK).body(eventService.joinToEvent(eventId));
+    }
+
+    @PutMapping("/leave/{eventId}")
+    public ResponseEntity<Object> leaveEvent(@PathVariable("eventId") Long eventId) {
+        return status(OK).body(eventService.leaveEvent(eventId));
+    }
+
+    @PutMapping("/remove-user")
+    public ResponseEntity<EventResponse> removeSomeoneFromEvent(@RequestParam Long eventId,
+                                                                @RequestParam Long userToRemoveId) {
+        return status(ACCEPTED).body(eventService.removeSomeoneFromEvent(eventId, userToRemoveId));
+    }
 }
+
+
