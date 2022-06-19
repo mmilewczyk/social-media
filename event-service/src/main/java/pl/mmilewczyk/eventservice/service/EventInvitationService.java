@@ -1,6 +1,8 @@
 package pl.mmilewczyk.eventservice.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -11,6 +13,9 @@ import pl.mmilewczyk.eventservice.model.dto.PrivateEventResponse;
 import pl.mmilewczyk.eventservice.model.entity.EventInvitation;
 import pl.mmilewczyk.eventservice.model.enums.Status;
 import pl.mmilewczyk.eventservice.repository.EventInvitationRepository;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -94,5 +99,19 @@ public class EventInvitationService {
                     "You have already accepted the invitation to event " + eventInvitation.getEventId());
         }
         return eventService.getPrivateEventResponseById(eventInvitation.getEventId());
+    }
+
+    public Page<EventInvitationRequest> getCurrentUsersInvitationsToEvent() {
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        List<EventInvitation> eventInvitationRequests = eventInvitationRepository
+                .findEventInvitationsByInviteeId(currentUser.userId());
+        List<EventInvitationRequest> responses = new ArrayList<>();
+        eventInvitationRequests.forEach(eventInvitationRequest -> {
+            EventResponse event = eventService.getEventResponseById(eventInvitationRequest.getEventId());
+            UserResponseWithId inviter = utilsService.getUserById(eventInvitationRequest.getInviterId());
+            UserResponseWithId invitee = utilsService.getUserById(eventInvitationRequest.getInviteeId());
+            responses.add(eventInvitationRequest.mapEventInvitationToEventInvitationRequest(event, inviter, invitee));
+        });
+        return new PageImpl<>(responses);
     }
 }
