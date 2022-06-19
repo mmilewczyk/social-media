@@ -59,6 +59,23 @@ public class EventService {
         eventRepository.delete(event);
     }
 
+    public EventResponse makeSomeoneAModerator(Long eventId, Long userId) {
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        UserResponseWithId user = utilsService.getUserById(userId);
+        Event event = getEventById(eventId);
+        if (!event.getOrganizerId().equals(currentUser.userId())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not owner of the event");
+        }
+        if (event.getModeratorsIds().contains(userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, String.format(
+                    "User %s is aldread a moderator of the event %s", user.username(), eventId));
+        }
+        event.getModeratorsIds().add(userId);
+        eventRepository.save(event);
+
+        return getEventResponseById(eventId);
+    }
+
     private EventResponse getEventResponseById(Long eventId) {
         Event event = getEventById(eventId);
         UserResponseWithId organizer = utilsService.getUserById(event.getOrganizerId());
