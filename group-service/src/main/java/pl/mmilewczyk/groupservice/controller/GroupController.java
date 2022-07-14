@@ -10,6 +10,7 @@ import pl.mmilewczyk.groupservice.model.dto.GroupResponse;
 import pl.mmilewczyk.groupservice.model.dto.GroupResponseLite;
 import pl.mmilewczyk.groupservice.service.GroupService;
 
+import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.ResponseEntity.status;
 
 @RestController
@@ -54,6 +55,11 @@ public class GroupController {
     public ResponseEntity<GroupResponse> makeSomeoneAModerator(@RequestParam Long groupId,
                                                                @RequestParam Long userId) {
         return status(HttpStatus.OK).body(groupService.makeSomeoneAModerator(groupId, userId));
+    }
+
+    @PutMapping("/edit/remove/moderator")
+    public ResponseEntity<GroupResponse> removeSomeoneAsAModerator(@RequestParam Long groupId, @RequestParam Long userId) {
+        return status(OK).body(groupService.deleteSomeoneAsAModerator(groupId, userId));
     }
 
     @PutMapping("/remove-user")

@@ -19,6 +19,8 @@
         <module>amqp</module>
         <module>comment-service</module>
         <module>chat-service</module>
+        <module>group-service</module>
+        <module>event-service</module>
     </modules>
 
     <name>social-media</name>
