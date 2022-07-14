@@ -151,7 +151,7 @@ public record PostService(PostRepository postRepository,
             mapCommentIdsToCommentResponses(post, commentResponses);
             return post.mapToPostResponse(authorOfPost, commentResponses);
         } else {
-            throw new ResponseStatusException(HttpStatus.NOT_MODIFIED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
     }
 
