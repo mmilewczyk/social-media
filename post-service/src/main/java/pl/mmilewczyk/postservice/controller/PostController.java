@@ -12,6 +12,7 @@ import pl.mmilewczyk.postservice.service.PostService;
 import static org.springframework.http.ResponseEntity.status;
 
 @RestController
+@CrossOrigin (origins = "*")
 @RequestMapping(path = "api/v1/posts")
 public record PostController(PostService postService) {
 
@@ -25,7 +26,7 @@ public record PostController(PostService postService) {
         return status(HttpStatus.OK).body(postService.getAllLatestPosts());
     }
 
-    @GetMapping
+    @GetMapping("/search/followed")
     public ResponseEntity<Page<PostResponseLite>> getAllLatestPostsOfFollowedPeople() {
         return status(HttpStatus.OK).body(postService.getAllLatestPostsOfFollowedPeople());
     }
@@ -35,12 +36,12 @@ public record PostController(PostService postService) {
         return status(HttpStatus.OK).body(postService.getSomeonePostsByUsername(username));
     }
 
-    @GetMapping
+    @GetMapping("/search/id")
     public ResponseEntity<PostResponse> getPostById(@RequestParam("id") Long postId) {
         return status(HttpStatus.OK).body(postService.getPostById(postId));
     }
 
-    @GetMapping
+    @GetMapping("/search/title")
     public ResponseEntity<Page<PostResponseLite>> getPostByTitle(@RequestParam("title") String title) {
         return status(HttpStatus.OK).body(postService.getPostByTitle(title));
     }

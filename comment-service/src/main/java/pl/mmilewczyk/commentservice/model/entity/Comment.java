@@ -35,7 +35,7 @@ public class Comment {
     private boolean wasEdited;
 
     public CommentResponse mapToCommentResponse(UserResponseWithId user) {
-        return new CommentResponse(user.username(), this.createdAt, this.body, this.likes);
+        return new CommentResponse(user.username(), this.createdAt, this.wasEdited, this.body, this.likes);
     }
 
     public boolean isComplete() {

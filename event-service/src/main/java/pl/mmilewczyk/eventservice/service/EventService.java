@@ -27,7 +27,6 @@ public class EventService {
 
     private static final String EVENT_NOT_FOUND_ALERT = "The requested event with id %s was not found.";
 
-
     public EventResponse createNewEvent(EventRequest eventRequest) {
         UserResponseWithId organizer = utilsService.getCurrentUser();
 

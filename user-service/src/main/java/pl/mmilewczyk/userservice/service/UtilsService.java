@@ -13,6 +13,7 @@ import pl.mmilewczyk.userservice.security.JwtUtils;
 
 import javax.servlet.http.HttpServletRequest;
 
+
 @Service
 public record UtilsService(UserRepository userRepository, JwtUtils jwtUtils) {
 
@@ -25,6 +26,9 @@ public record UtilsService(UserRepository userRepository, JwtUtils jwtUtils) {
 
     private String getUsernameFromJwtToken() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        if (request.getHeader("Authorization") == null) {
+            throw new NullPointerException("Request does not have an Authorization header");
+        }
         String token = request.getHeader("Authorization").split(" ")[1];
         if (token == null) {
             throw new NullPointerException("Token is null");

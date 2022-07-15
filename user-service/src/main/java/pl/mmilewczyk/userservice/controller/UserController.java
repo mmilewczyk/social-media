@@ -12,6 +12,7 @@ import pl.mmilewczyk.userservice.service.UserService;
 import pl.mmilewczyk.userservice.service.UtilsService;
 
 @RestController
+@CrossOrigin (origins = "*")
 @RequestMapping("api/v1/users")
 public record UserController(UserService userService, UtilsService utilsService) {
 
