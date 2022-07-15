@@ -106,8 +106,8 @@ public class AuthService {
                 request.lookingFor());
 
         validatorService.checkIfEmailOrUsernameAreNotTaken(user);
-        languageRepository.saveAll(request.languageISpeak());
-        userRepository.save(user);
+        languageRepository.saveAllAndFlush(request.languageISpeak());
+        userRepository.saveAndFlush(user);
 
         String token = UUID.randomUUID().toString();
         ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), user);
@@ -116,7 +116,7 @@ public class AuthService {
         String link = String.format("http://localhost:8082/api/v1/auth/confirm?token=%s", token);
         notificationClient.sendAccountConfirmationEmail(user.getEmail(), link);
 
-        return new SuccessfulAuthDto(user.getUserId(), user.getUsername(), null);
+        return new SuccessfulAuthDto(user.getUserId(), user.getUsername(), token);
     }
 
     @Transactional

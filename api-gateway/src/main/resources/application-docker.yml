@@ -12,11 +12,25 @@ spring:
         - id: user-service
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/api/v1/clients/**
+            - Path=/api/v1/auth/signIn, /api/v1/auth/signUp, /api/v1/users/**
         - id: post-service
           uri: lb://POST-SERVICE
           predicates:
             - Path=/api/v1/posts/**
+          filters:
+            - AuthGatewayFilter
+        - id: group-service
+          uri: lb://GROUP-SERVICE
+          predicates:
+            - Path=/api/v1/groups/**
+          filters:
+            - AuthGatewayFilter
+        - id: event-service
+          uri: lb://EVENT-SERVICE
+          predicates:
+            - Path=/api/v1/events/**
+          filters:
+            - AuthGatewayFilter
 eureka:
   client:
     service-url:

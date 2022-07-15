@@ -31,6 +31,18 @@ spring:
             - Path=/api/v1/posts/**
           filters:
             - AuthGatewayFilter
+        - id: group-service
+          uri: lb://GROUP-SERVICE
+          predicates:
+            - Path=/api/v1/groups/**
+          filters:
+            - AuthGatewayFilter
+        - id: event-service
+          uri: lb://EVENT-SERVICE
+          predicates:
+            - Path=/api/v1/events/**
+          filters:
+            - AuthGatewayFilter
 eureka:
   client:
     service-url:

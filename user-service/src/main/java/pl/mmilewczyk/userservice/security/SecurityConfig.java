@@ -21,5 +21,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             throws Exception {
         http.csrf().disable()
                 .authorizeRequests().anyRequest().permitAll();
+        http.cors().disable();
     }
 }
