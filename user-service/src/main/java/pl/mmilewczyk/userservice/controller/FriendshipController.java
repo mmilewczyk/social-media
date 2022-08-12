@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.*;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
 import pl.mmilewczyk.userservice.service.FollowshipService;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("api/v1/users/profile")
 public record FriendshipController(FollowshipService followshipService) {
@@ -28,6 +30,10 @@ public record FriendshipController(FollowshipService followshipService) {
     @GetMapping("/{userId}/followed")
     public ResponseEntity<Page<UserResponseWithId>> getFollowedUsersOfUserByUserId(@PathVariable("userId") Long userId) {
         return ResponseEntity.ok(followshipService.getFollowedUsersOfUserByUserId(userId));
+    }
 
+    @GetMapping("/technical/{userId}/followed")
+    public List<UserResponseWithId> technicalGetFollowedUsersOfUserByUserId(@PathVariable("userId") Long userId) {
+        return followshipService.technicalGetFollowedUsersOfUserByUserId(userId);
     }
 }

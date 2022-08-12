@@ -22,8 +22,9 @@ public record UserController(UserService userService, UtilsService utilsService)
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<UserResponseWithId> getLoggedInUser() {
-        return ResponseEntity.status(HttpStatus.OK).body(utilsService.getLoggedInUser());
+    @ResponseStatus(HttpStatus.OK)
+    public UserResponseWithId getLoggedInUser() {
+        return utilsService.getLoggedInUser();
     }
 
     @GetMapping("/profile/{username}")

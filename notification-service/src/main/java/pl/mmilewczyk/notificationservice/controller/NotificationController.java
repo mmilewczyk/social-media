@@ -32,4 +32,19 @@ public record NotificationController(NotificationService notificationService) {
     void sendEmailToThePostAuthorAboutDeletionOfPost(NotificationRequest notificationRequest) {
         notificationService.sendEmailToThePostAuthorAboutDeletionOfPost(notificationRequest);
     }
+
+    @PostMapping("/editedComment")
+    void sendEmailToTheCommentAuthorAboutEditionOfComment(NotificationRequest notificationRequest) {
+        notificationService.sendEmailToTheCommentAuthorAboutEditionOfComment(notificationRequest);
+    }
+
+    @PostMapping("/deletedGroup")
+    void sendEmailToTheGroupAuthorAboutDeletionOfGroup(NotificationRequest notificationRequest) {
+        notificationService.sendEmailToTheGroupAuthorAboutDeletionOfGroup(notificationRequest);
+    }
+
+    @PostMapping("/newInvitation")
+    void sendEmailToTheInviteeAboutInvitationToTheGroup(NotificationRequest notificationRequest) {
+        notificationService.sendEmailToTheInviteeAboutInvitationToTheGroup(notificationRequest);
+    }
 }

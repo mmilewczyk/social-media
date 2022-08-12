@@ -1,3 +1,6 @@
+test:
+  user:
+    nickname: "spajki"
 server:
   port: 8082
   error:

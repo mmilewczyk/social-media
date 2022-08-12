@@ -4,9 +4,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import pl.mmilewczyk.clients.comment.CommentResponse;
 import pl.mmilewczyk.commentservice.model.dto.CommentRequest;
+import pl.mmilewczyk.commentservice.model.dto.CommentResponse;
 import pl.mmilewczyk.commentservice.service.CommentService;
+
+import java.util.List;
 
 import static org.springframework.http.ResponseEntity.status;
 
@@ -29,6 +31,11 @@ public record CommentController(CommentService commentService) {
     @GetMapping
     ResponseEntity<Page<CommentResponse>> getAllCommentsOfThePost(@RequestParam("postId") Long id) {
         return status(HttpStatus.OK).body(commentService.getAllCommentsOfThePost(id));
+    }
+
+    @GetMapping("/technical/list")
+    List<CommentResponse> technicalGetAllCommentsOfThePost(@RequestParam("postId") Long id) {
+        return commentService.getAllCommentsOfThePost(id).getContent();
     }
 
     @DeleteMapping("/{commentId}")

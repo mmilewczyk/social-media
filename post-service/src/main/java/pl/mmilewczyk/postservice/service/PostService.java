@@ -61,6 +61,10 @@ public record PostService(PostRepository postRepository,
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         if (post.authorUsername().equals(currentUser.username()) || isUserAdminOrModerator(currentUser)) {
             postRepository.deleteById(postId);
+            List<Long> comments = utilsService.getAllCommentsOfThePost(postId)
+                    .stream()
+                    .map(CommentResponse::commentId).toList();
+            comments.forEach(utilsService::deleteCommentById);
             if (isUserAdminOrModerator(currentUser)) {
                 sendEmailToThePostAuthorAboutDeletionOfPost(postId);
             }
@@ -97,8 +101,7 @@ public record PostService(PostRepository postRepository,
                         String.format(POST_NOT_FOUND_ALERT, postId)));
         UserResponseWithId user = utilsService.getUserById(post.getAuthorId());
 
-        List<CommentResponse> commentResponses = new ArrayList<>();
-        mapCommentIdsToCommentResponses(post, commentResponses);
+        List<CommentResponse> commentResponses = utilsService.getAllCommentsOfThePost(postId);
         return post.mapToPostResponse(user, commentResponses);
     }
 
@@ -163,8 +166,8 @@ public record PostService(PostRepository postRepository,
     }
 
     public Page<PostResponseLite> getAllLatestPostsOfFollowedPeople() {
-        List<UserResponseWithId> followedUsers = utilsService.getFollowedUsersByUserId(
-                utilsService.getCurrentUser().userId());
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        List<UserResponseWithId> followedUsers = utilsService.getFollowedUsersByUserId(currentUser.userId());
 
         List<Post> foundedPosts = new ArrayList<>();
         followedUsers.forEach(followedUser -> foundedPosts.addAll(

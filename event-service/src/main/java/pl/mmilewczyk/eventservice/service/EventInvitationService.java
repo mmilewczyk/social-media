@@ -38,7 +38,7 @@ public class EventInvitationService {
             } else if (event.attendees().contains(invitee)) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, String.format(
                         "User %s is aldread a member of the event %s", invitee.username(), eventId));
-            } else if (event.attendees().contains(inviter)) {
+            } else if (!event.attendees().contains(inviter)) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, String.format(
                         "You have to be a member of the event %s to invite other users", eventId));
             } else {
@@ -60,7 +60,7 @@ public class EventInvitationService {
                 new ResponseStatusException(HttpStatus.NOT_FOUND,
                         String.format(EVENT_INVITATION_NOT_FOUND_ALERT, eventInvitationId)));
         UserResponseWithId currentUser = utilsService.getCurrentUser();
-        if (!eventInvitation.getInviteeId().equals(currentUser.userId()) || !utilsService.isUserAdminOrModerator(currentUser)) {
+        if (!eventInvitation.getInviteeId().equals(currentUser.userId())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                     "You are not invited to event " + eventInvitation.getEventId());
         }
@@ -93,7 +93,6 @@ public class EventInvitationService {
             case INVITED -> {
                 eventInvitation.setStatus(Status.REJECTED);
                 eventInvitationRepository.save(eventInvitation);
-                eventService.joinToEvent(eventInvitation.getEventId());
             }
             case ACCEPTED -> throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
                     "You have already accepted the invitation to event " + eventInvitation.getEventId());

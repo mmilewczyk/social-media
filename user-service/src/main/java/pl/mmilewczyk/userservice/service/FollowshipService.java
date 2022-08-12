@@ -19,9 +19,9 @@ public record FollowshipService(FollowshipRepository followshipRepository,
                                 UtilsService utilsService) {
 
     public Page<UserResponseWithId> getFollowersOfUserByUserId(Long userId) {
-        List<UserResponseWithId> followers = followshipRepository.findFollowshipsByFollowingUser_UserId(userId)
+        List<UserResponseWithId> followers = followshipRepository.findFollowshipsByFollowedUser_UserId(userId)
                 .stream()
-                .map(Followship::getFollowedUser)
+                .map(Followship::getFollowingUser)
                 .map(User::mapToUserResponseWithId)
                 .toList();
         return new PageImpl<>(followers);
@@ -30,10 +30,18 @@ public record FollowshipService(FollowshipRepository followshipRepository,
     public Page<UserResponseWithId> getFollowedUsersOfUserByUserId(Long userId) {
         List<UserResponseWithId> followers = followshipRepository.findFollowshipsByFollowingUser_UserId(userId)
                 .stream()
-                .map(Followship::getFollowingUser)
+                .map(Followship::getFollowedUser)
                 .map(User::mapToUserResponseWithId)
                 .toList();
         return new PageImpl<>(followers);
+    }
+
+    public List<UserResponseWithId> technicalGetFollowedUsersOfUserByUserId(Long userId) {
+        return followshipRepository.findFollowshipsByFollowingUser_UserId(userId)
+                .stream()
+                .map(Followship::getFollowedUser)
+                .map(User::mapToUserResponseWithId)
+                .toList();
     }
 
     public UserResponseWithId followOtherUserById(Long userId) {
@@ -44,7 +52,13 @@ public record FollowshipService(FollowshipRepository followshipRepository,
                         String.format("User with id: %s does not exist", userId)));
 
         Followship followship = new Followship(loggedInUser, userToFollow);
+        if (loggedInUser.getFollowedAmount() == null) {
+            loggedInUser.setFollowedAmount(0L);
+        }
         loggedInUser.setFollowedAmount(loggedInUser.getFollowedAmount() + 1);
+        if (userToFollow.getFollowersAmount() == null) {
+            userToFollow.setFollowersAmount(0L);
+        }
         userToFollow.setFollowersAmount(userToFollow.getFollowersAmount() + 1);
         followshipRepository.save(followship);
         userRepository.save(loggedInUser);
@@ -59,9 +73,18 @@ public record FollowshipService(FollowshipRepository followshipRepository,
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         String.format("User with id: %s does not exist", userId)));
 
-        Followship followship = followshipRepository.findFollowshipByFollowedUserAndFollowingUser(userToUnfollow, loggedInUser);
+        Followship followship = followshipRepository.findTop1FollowshipByFollowedUserAndFollowingUser(userToUnfollow, loggedInUser);
+        if (loggedInUser.getFollowedAmount() == null) {
+            loggedInUser.setFollowedAmount(0L);
+        }
         loggedInUser.setFollowedAmount(loggedInUser.getFollowedAmount() - 1);
+        if (userToUnfollow.getFollowersAmount() == null) {
+            userToUnfollow.setFollowersAmount(0L);
+        }
         userToUnfollow.setFollowersAmount(userToUnfollow.getFollowersAmount() - 1);
+        if (followship == null) {
+            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "You don't follow this user");
+        }
         followshipRepository.delete(followship);
         userRepository.save(loggedInUser);
         userRepository.save(userToUnfollow);

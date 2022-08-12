@@ -12,8 +12,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.userservice.model.dto.UserEditRequest;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
+import pl.mmilewczyk.userservice.model.entity.Education;
+import pl.mmilewczyk.userservice.model.entity.Language;
 import pl.mmilewczyk.userservice.model.entity.User;
 import pl.mmilewczyk.userservice.model.enums.Gender;
+import pl.mmilewczyk.userservice.repository.EducationRepository;
+import pl.mmilewczyk.userservice.repository.LanguageRepository;
 import pl.mmilewczyk.userservice.repository.UserRepository;
 
 import java.util.ArrayList;
@@ -22,6 +26,8 @@ import java.util.List;
 @Service
 @Slf4j
 public record UserService(UserRepository userRepository,
+                          EducationRepository educationRepository,
+                          LanguageRepository languageRepository,
                           UtilsService utilsService) implements UserDetailsService {
 
     private static final String USER_NOT_FOUND_MSG = "user with username %s not found";
@@ -69,10 +75,36 @@ public record UserService(UserRepository userRepository,
         user.setGender(userEditRequest.gender());
         user.setCurrentCity(userEditRequest.currentCity());
         user.setHomeTown(userEditRequest.homeTown());
-        user.setLanguagesISpeak(userEditRequest.languagesISpeak());
-        user.setLanguagesImLearning(userEditRequest.languagesImLearning());
+
+        List<Language> editedLanguagesISpeak = user.getLanguagesISpeak();
+        if (editedLanguagesISpeak == null) {
+            editedLanguagesISpeak = new ArrayList<>();
+        }
+        editedLanguagesISpeak.clear();
+        editedLanguagesISpeak.addAll(userEditRequest.languagesISpeak());
+        languageRepository.saveAll(editedLanguagesISpeak);
+        user.setLanguagesISpeak(editedLanguagesISpeak);
+
+        List<Language> editedLanguagesImLearning = user.getLanguagesImLearning();
+        if (editedLanguagesImLearning == null) {
+            editedLanguagesImLearning = new ArrayList<>();
+        }
+        editedLanguagesImLearning.clear();
+        editedLanguagesImLearning.addAll(userEditRequest.languagesImLearning());
+        languageRepository.saveAll(editedLanguagesImLearning);
+        user.setLanguagesImLearning(editedLanguagesImLearning);
+
         user.setLookingFor(userEditRequest.lookingFor());
-        user.setEducation(userEditRequest.education());
+
+        Education editedEducation = user.getEducation();
+        if (user.getEducation() == null) {
+            editedEducation = new Education();
+        }
+        editedEducation.setEducationLevel(userEditRequest.education().getEducationLevel());
+        editedEducation.setNameOfUniversityOrSchool(userEditRequest.education().getNameOfUniversityOrSchool());
+        educationRepository.save(editedEducation);
+
+        user.setEducation(editedEducation);
         user.setOccupationOrJob(userEditRequest.occupationOrJob());
         user.setRelationshipStatus(userEditRequest.relationshipStatus());
         user.setAboutMe(userEditRequest.aboutMe());
