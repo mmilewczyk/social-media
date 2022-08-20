@@ -82,10 +82,17 @@ public record NotificationService(NotificationRepository notificationRepository,
     }
 
     public void sendEmailToTheInviteeAboutInvitationToTheGroup(NotificationRequest notificationRequest) {
-        String subject = "Your group has been deleted by our team.";
+        String subject = "A new group invitation has been received.";
         log.info("Sending a email about new invitation to the group to {}", notificationRequest.toUserEmail());
         sendEmailBasicForm(notificationRequest, subject);
         log.info("Email about new invitation to the group to {} has been sent", notificationRequest.toUserEmail());
+    }
+
+    public void sendEmailToTheInviteeAboutInvitationToTheEvent(NotificationRequest notificationRequest) {
+        String subject = "A new event invitation has been received.";
+        log.info("Sending a email about new invitation to the event to {}", notificationRequest.toUserEmail());
+        sendEmailBasicForm(notificationRequest, subject);
+        log.info("Email about new invitation to the event to {} has been sent", notificationRequest.toUserEmail());
     }
 
     private void sendEmailBasicForm(NotificationRequest notificationRequest, String subject) {

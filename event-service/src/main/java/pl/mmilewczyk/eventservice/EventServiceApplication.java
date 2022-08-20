@@ -9,7 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @EnableSwagger2
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"pl.mmilewczyk.eventservice", "pl.mmilewczyk.amqp"})
 @EnableFeignClients(basePackages = "pl.mmilewczyk.clients")
 public class EventServiceApplication {
 

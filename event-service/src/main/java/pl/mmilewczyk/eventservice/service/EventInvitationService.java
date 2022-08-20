@@ -6,6 +6,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import pl.mmilewczyk.amqp.RabbitMQMessageProducer;
+import pl.mmilewczyk.clients.notification.NotificationClient;
+import pl.mmilewczyk.clients.notification.NotificationRequest;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 import pl.mmilewczyk.eventservice.model.dto.EventInvitationRequest;
 import pl.mmilewczyk.eventservice.model.dto.EventResponse;
@@ -24,6 +27,8 @@ public class EventInvitationService {
     private final UtilsService utilsService;
     private final EventInvitationRepository eventInvitationRepository;
     private final EventService eventService;
+    private final NotificationClient notificationClient;
+    private final RabbitMQMessageProducer rabbitMQMessageProducer;
 
     private static final String EVENT_INVITATION_NOT_FOUND_ALERT = "The requested event invitation with id %s was not found.";
 
@@ -48,11 +53,23 @@ public class EventInvitationService {
                         invitee.userId(),
                         Status.INVITED);
                 eventInvitationRepository.save(eventInvitation);
+                sendEmailToTheInviteeAboutInvitationToTheEvent(eventId, eventInvitation);
             }
-            // TODO: SEND NOTIFICATION TO INVITEE
         }
         assert eventInvitation != null;
         return eventInvitation.mapEventInvitationToEventInvitationRequest(event, inviter, invitee);
+    }
+
+    private void sendEmailToTheInviteeAboutInvitationToTheEvent(Long eventId, EventInvitation eventInvitation) {
+        EventResponse eventResponse = eventService.getEventResponseById(eventId);
+        UserResponseWithId eventInvitee = utilsService.getUserById(eventInvitation.getInviteeId());
+        NotificationRequest notificationRequest = new NotificationRequest(
+                eventInvitee.userId(),
+                eventInvitee.email(),
+                String.format("Hi %s! You are invited to the event '%s'.",
+                        eventInvitee.username(), eventResponse.name()));
+        notificationClient.sendEmailToTheInviteeAboutInvitationToTheEvent(notificationRequest);
+        rabbitMQMessageProducer.publish(notificationRequest, "internal.exchange", "internal.notification.routing-key");
     }
 
     public EventResponse acceptInvitationToEvent(Long eventInvitationId) {
