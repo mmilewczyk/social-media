@@ -24,4 +24,13 @@ public interface NotificationClient {
 
     @PostMapping(BASE_URL + "/deletedPost")
     void sendEmailToThePostAuthorAboutDeletionOfPost(NotificationRequest notificationRequest);
+
+    @PostMapping(BASE_URL + "/editedComment")
+    void sendEmailToTheCommentAuthorAboutEditionOfComment(NotificationRequest notificationRequest);
+
+    @PostMapping(BASE_URL + "/deletedGroup")
+    void sendEmailToTheGroupAuthorAboutDeletionOfGroup(NotificationRequest notificationRequest);
+
+    @PostMapping(BASE_URL + "/newInvitation")
+    void sendEmailToTheInviteeAboutInvitationToTheGroup(NotificationRequest notificationRequest);
 }

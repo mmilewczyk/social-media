@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import pl.mmilewczyk.amqp.RabbitMQMessageProducer;
+import pl.mmilewczyk.clients.notification.NotificationClient;
+import pl.mmilewczyk.clients.notification.NotificationRequest;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 import pl.mmilewczyk.groupservice.model.dto.GroupInvitationRequest;
 import pl.mmilewczyk.groupservice.model.dto.GroupResponse;
@@ -18,6 +21,8 @@ public class GroupInvitationService {
     private final UtilsService utilsService;
     private final GroupInvitationRepository groupInvitationRepository;
     private final GroupService groupService;
+    private final NotificationClient notificationClient;
+    private final RabbitMQMessageProducer rabbitMQMessageProducer;
 
     private static final String GROUP_INVITATION_NOT_FOUND_ALERT = "The requested group invitation with id %s was not found.";
 
@@ -43,10 +48,22 @@ public class GroupInvitationService {
                         InvitationStatus.INVITED);
                 groupInvitationRepository.save(groupInvitation);
             }
-            // TODO: SEND NOTIFICATION TO INVITEE
+            sendEmailToTheInviteeAboutInvitationToTheGroup(groupId);
         }
         assert groupInvitation != null;
         return groupInvitation.mapGroupInvitationToGroupInvitationRequest(group, inviter, invitee);
+    }
+
+    private void sendEmailToTheInviteeAboutInvitationToTheGroup(Long groupId) {
+        GroupResponse groupResponse = groupService.getGroupResponseById(groupId);
+        UserResponseWithId groupAuthor = groupResponse.author();
+        NotificationRequest notificationRequest = new NotificationRequest(
+                groupAuthor.userId(),
+                groupAuthor.email(),
+                String.format("Hi %s! You are invited to the group '%s'.",
+                        groupAuthor.username(), groupResponse.groupName()));
+        notificationClient.sendEmailToTheInviteeAboutInvitationToTheGroup(notificationRequest);
+        rabbitMQMessageProducer.publish(notificationRequest, "internal.exchange", "internal.notification.routing-key");
     }
 
     public GroupResponse acceptInvitationToGroup(Long groupInvitationId) {
@@ -85,7 +102,6 @@ public class GroupInvitationService {
                 case INVITED -> {
                     groupInvitation.setStatus(InvitationStatus.REJECTED);
                     groupInvitationRepository.save(groupInvitation);
-                    groupService.joinToGroup(groupInvitation.getGroupId());
                 }
                 case ACCEPTED -> throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
                         "You have already accepted the invitation to group " + groupInvitation.getGroupId());

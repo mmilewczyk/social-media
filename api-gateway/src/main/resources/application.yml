@@ -1,6 +1,7 @@
 server:
   port: 8080
-
+  error:
+    include-message: always
 management:
   endpoint:
     gateway:
@@ -29,6 +30,18 @@ spring:
           uri: lb://POST-SERVICE
           predicates:
             - Path=/api/v1/posts/**
+          filters:
+            - AuthGatewayFilter
+        - id: group-service
+          uri: lb://GROUP-SERVICE
+          predicates:
+            - Path=/api/v1/groups/**
+          filters:
+            - AuthGatewayFilter
+        - id: event-service
+          uri: lb://EVENT-SERVICE
+          predicates:
+            - Path=/api/v1/events/**
           filters:
             - AuthGatewayFilter
 eureka:

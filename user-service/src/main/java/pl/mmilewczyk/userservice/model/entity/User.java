@@ -90,10 +90,9 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private RelationshipStatus relationshipStatus;
 
-    private Long followersAmount;
+    private Long followersAmount = 0L;
 
-    private Long followedAmount;
-
+    private Long followedAmount = 0L;
 
     private Boolean notifyAboutComments;
 

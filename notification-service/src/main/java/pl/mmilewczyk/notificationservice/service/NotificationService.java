@@ -47,35 +47,53 @@ public record NotificationService(NotificationRepository notificationRepository,
     }
 
     public void sendEmailAboutNewComment(NotificationRequest notificationRequest) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(APPLICATION_EMAIL);
-        message.setTo(notificationRequest.toUserEmail());
-        message.setSubject("Someone commented on your post! Check it out");
-        message.setText(notificationRequest.message());
+        String subject = "Someone commented on your post! Check it out";
         log.info("Sending a email about new comment to {}", notificationRequest.toUserEmail());
-        mailSender.send(message);
+        sendEmailBasicForm(notificationRequest, subject);
         log.info("Email about new comment to {} has been sent", notificationRequest.toUserEmail());
     }
 
     public void sendEmailToTheCommentAuthorAboutDeletionOfComment(NotificationRequest notificationRequest) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(APPLICATION_EMAIL);
-        message.setTo(notificationRequest.toUserEmail());
-        message.setSubject("Your comment has been removed by our team.");
-        message.setText(notificationRequest.message());
+        String subject = "Your comment has been removed by our team.";
         log.info("Sending a email about deletion of comment to {}", notificationRequest.toUserEmail());
-        mailSender.send(message);
+        sendEmailBasicForm(notificationRequest, subject);
         log.info("Email about deletion of comment to {} has been sent", notificationRequest.toUserEmail());
     }
 
     public void sendEmailToThePostAuthorAboutDeletionOfPost(NotificationRequest notificationRequest) {
+        String subject = "Your post has been removed by our team.";
+        log.info("Sending a email about deletion of post to {}", notificationRequest.toUserEmail());
+        sendEmailBasicForm(notificationRequest, subject);
+        log.info("Email about deletion of post to {} has been sent", notificationRequest.toUserEmail());
+    }
+
+    public void sendEmailToTheCommentAuthorAboutEditionOfComment(NotificationRequest notificationRequest) {
+        String subject = "Your comment has been edited by our team.";
+        log.info("Sending a email about edition of comment to {}", notificationRequest.toUserEmail());
+        sendEmailBasicForm(notificationRequest, subject);
+        log.info("Email about edition of comment to {} has been sent", notificationRequest.toUserEmail());
+    }
+
+    public void sendEmailToTheGroupAuthorAboutDeletionOfGroup(NotificationRequest notificationRequest) {
+        String subject = "Your group has been deleted by our team.";
+        log.info("Sending a email about deleted group to {}", notificationRequest.toUserEmail());
+        sendEmailBasicForm(notificationRequest, subject);
+        log.info("Email about deleted group to {} has been sent", notificationRequest.toUserEmail());
+    }
+
+    public void sendEmailToTheInviteeAboutInvitationToTheGroup(NotificationRequest notificationRequest) {
+        String subject = "Your group has been deleted by our team.";
+        log.info("Sending a email about new invitation to the group to {}", notificationRequest.toUserEmail());
+        sendEmailBasicForm(notificationRequest, subject);
+        log.info("Email about new invitation to the group to {} has been sent", notificationRequest.toUserEmail());
+    }
+
+    private void sendEmailBasicForm(NotificationRequest notificationRequest, String subject) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(APPLICATION_EMAIL);
         message.setTo(notificationRequest.toUserEmail());
-        message.setSubject("Your post has been removed by our team.");
+        message.setSubject(subject);
         message.setText(notificationRequest.message());
-        log.info("Sending a email about deletion of post to {}", notificationRequest.toUserEmail());
         mailSender.send(message);
-        log.info("Email about deletion of post to {} has been sent", notificationRequest.toUserEmail());
     }
 }

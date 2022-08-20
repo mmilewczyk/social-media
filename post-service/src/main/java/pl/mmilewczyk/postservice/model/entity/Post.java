@@ -28,7 +28,7 @@ public class Post {
     private Long authorId;
     private LocalDateTime createdAt;
 
-    @Lob
+    //@Lob
     private String body;
 
     private Long likes;
@@ -42,6 +42,7 @@ public class Post {
 
     public PostResponse mapToPostResponse(UserResponseWithId author, List<CommentResponse> commentResponses) {
         return new PostResponse(
+                this.getPostId(),
                 this.getTitle(),
                 author.username(),
                 this.getCreatedAt(),
@@ -52,6 +53,7 @@ public class Post {
 
     public PostResponseLite mapToPostResponseLite(UserResponseWithId author) {
         return new PostResponseLite(
+                this.getPostId(),
                 this.getTitle(),
                 author.username(),
                 this.getCreatedAt(),

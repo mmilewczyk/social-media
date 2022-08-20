@@ -7,17 +7,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.amqp.RabbitMQMessageProducer;
-import pl.mmilewczyk.clients.comment.CommentResponse;
 import pl.mmilewczyk.clients.notification.NotificationClient;
 import pl.mmilewczyk.clients.notification.NotificationRequest;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 import pl.mmilewczyk.clients.user.enums.RoleName;
 import pl.mmilewczyk.commentservice.model.dto.CommentRequest;
+import pl.mmilewczyk.commentservice.model.dto.CommentResponse;
 import pl.mmilewczyk.commentservice.model.entity.Comment;
 import pl.mmilewczyk.commentservice.repository.CommentRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -112,9 +113,13 @@ public record CommentService(CommentRepository commentRepository,
     }
 
     public Page<CommentResponse> getAllCommentsOfThePost(Long id) {
-        PostResponse post = utilsService.getPostById(id);
-        List<CommentResponse> comments = post.comments();
-        return new PageImpl<>(comments);
+        List<Comment> comments = commentRepository.findCommentsByPostId(id);
+        List<CommentResponse> mappedComments = new ArrayList<>();
+        for (Comment comment : comments) {
+            UserResponseWithId user = utilsService.getUserById(comment.getAuthorId());
+            mappedComments.add(comment.mapToCommentResponse(user));
+        }
+        return new PageImpl<>(mappedComments);
     }
 
     public CommentResponse editCommentById(Long commentId, CommentRequest commentRequest) {
@@ -126,11 +131,23 @@ public record CommentService(CommentRepository commentRepository,
             comment.setWasEdited(true);
             commentRepository.save(comment);
             if (isUserAdminOrModerator(currentUser)) {
-                // TODO: sendEmailToThePostAuthorAboutEditionOfPost(postId);
+                sendEmailToTheCommentAuthorAboutEditionOfComment(commentId);
             }
             return comment.mapToCommentResponse(authorOfComment);
         } else {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
+    }
+
+    private void sendEmailToTheCommentAuthorAboutEditionOfComment(Long commentId) {
+        CommentResponse comment = getCommentResponseById(commentId);
+        UserResponseWithId commentAuthor = utilsService.getUserByUsername(comment.authorUsername());
+        NotificationRequest notificationRequest = new NotificationRequest(
+                commentAuthor.userId(),
+                commentAuthor.email(),
+                String.format("Hi %s! Your comment '%s...' was edited by a moderator.",
+                        commentAuthor.username(), getCommentBodyToEmail(comment.body())));
+        notificationClient.sendEmailToTheCommentAuthorAboutEditionOfComment(notificationRequest);
+        rabbitMQMessageProducer.publish(notificationRequest, "internal.exchange", "internal.notification.routing-key");
     }
 }

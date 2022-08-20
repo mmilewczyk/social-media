@@ -39,7 +39,7 @@ public class EventInvitation {
         if (event == null && inviter == null && invitee == null) {
             throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE);
         }
-        return new EventInvitationRequest(this.getEventId(), event.name(), inviter.userId(), inviter.username(), invitee.userId(), invitee.username());
+        return new EventInvitationRequest(this.eventInvitationId, event.eventId(), event.name(), inviter.userId(), inviter.username(), invitee.userId(), invitee.username());
 
     }
 }

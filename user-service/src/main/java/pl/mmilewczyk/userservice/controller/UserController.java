@@ -12,6 +12,7 @@ import pl.mmilewczyk.userservice.service.UserService;
 import pl.mmilewczyk.userservice.service.UtilsService;
 
 @RestController
+@CrossOrigin (origins = "*")
 @RequestMapping("api/v1/users")
 public record UserController(UserService userService, UtilsService utilsService) {
 
@@ -21,8 +22,9 @@ public record UserController(UserService userService, UtilsService utilsService)
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<UserResponseWithId> getLoggedInUser() {
-        return ResponseEntity.status(HttpStatus.OK).body(utilsService.getLoggedInUser());
+    @ResponseStatus(HttpStatus.OK)
+    public UserResponseWithId getLoggedInUser() {
+        return utilsService.getLoggedInUser();
     }
 
     @GetMapping("/profile/{username}")

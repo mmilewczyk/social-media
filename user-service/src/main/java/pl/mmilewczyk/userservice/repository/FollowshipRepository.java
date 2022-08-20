@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface FollowshipRepository extends JpaRepository<Followship, Long> {
 
-    Followship findFollowshipByFollowedUserAndFollowingUser(User followedUser, User followingUser);
+    Followship findTop1FollowshipByFollowedUserAndFollowingUser(User followedUser, User followingUser);
     List<Followship> findFollowshipsByFollowingUser_UserId(Long followingUserId);
+    List<Followship> findFollowshipsByFollowedUser_UserId(Long followingUserId);
 }

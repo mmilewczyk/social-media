@@ -1,3 +1,6 @@
+test:
+  user:
+    nickname: "spajki"
 server:
   port: 8082
   error:
@@ -11,7 +14,7 @@ spring:
     username: agiklo
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect

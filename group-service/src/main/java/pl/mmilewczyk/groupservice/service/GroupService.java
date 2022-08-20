@@ -6,6 +6,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import pl.mmilewczyk.amqp.RabbitMQMessageProducer;
+import pl.mmilewczyk.clients.notification.NotificationClient;
+import pl.mmilewczyk.clients.notification.NotificationRequest;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 import pl.mmilewczyk.groupservice.model.dto.GroupRequest;
@@ -25,6 +28,8 @@ public class GroupService {
 
     private final GroupRepository groupRepository;
     private final UtilsService utilsService;
+    private final NotificationClient notificationClient;
+    private final RabbitMQMessageProducer rabbitMQMessageProducer;
 
     private static final String GROUP_NOT_FOUND_ALERT = "The requested group with id %s was not found.";
 
@@ -71,9 +76,21 @@ public class GroupService {
         if (group.author().userId().equals(currentUser.userId()) || utilsService.isUserAdminOrModerator(currentUser)) {
             groupRepository.deleteById(groupId);
             if (utilsService.isUserAdminOrModerator(currentUser)) {
-                // todo: sendEmailToTheGroupAuthorAboutDeletionOfGroup(groupId);
+                sendEmailToTheGroupAuthorAboutDeletionOfGroup(groupId);
             }
         }
+    }
+
+    private void sendEmailToTheGroupAuthorAboutDeletionOfGroup(Long groupId) {
+        GroupResponse groupResponse = getGroupResponseById(groupId);
+        UserResponseWithId groupAuthor = groupResponse.author();
+        NotificationRequest notificationRequest = new NotificationRequest(
+                groupAuthor.userId(),
+                groupAuthor.email(),
+                String.format("Hi %s! Your group '%s' was deleted by a moderator.",
+                        groupAuthor.username(), groupResponse.groupName()));
+        notificationClient.sendEmailToTheGroupAuthorAboutDeletionOfGroup(notificationRequest);
+        rabbitMQMessageProducer.publish(notificationRequest, "internal.exchange", "internal.notification.routing-key");
     }
 
     public GroupResponse joinToGroup(Long groupId) {

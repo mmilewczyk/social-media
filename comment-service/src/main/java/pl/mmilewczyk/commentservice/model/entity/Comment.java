@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import pl.mmilewczyk.clients.comment.CommentResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
+import pl.mmilewczyk.commentservice.model.dto.CommentResponse;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -35,7 +35,7 @@ public class Comment {
     private boolean wasEdited;
 
     public CommentResponse mapToCommentResponse(UserResponseWithId user) {
-        return new CommentResponse(user.username(), this.createdAt, this.body, this.likes);
+        return new CommentResponse(this.commentId, user.username(), this.createdAt, this.wasEdited, this.body, this.likes);
     }
 
     public boolean isComplete() {
