@@ -101,6 +101,12 @@ public record NotificationService(NotificationRepository notificationRepository,
         message.setTo(notificationRequest.toUserEmail());
         message.setSubject(subject);
         message.setText(notificationRequest.message());
-        mailSender.send(message);
+        if (isNotificationRequestCorrect(notificationRequest)) {
+            mailSender.send(message);
+        }
+    }
+
+    private boolean isNotificationRequestCorrect(NotificationRequest notificationRequest) {
+        return notificationRequest.toUserEmail() != null && notificationRequest.toUserId() != null && notificationRequest.message() != null;
     }
 }
