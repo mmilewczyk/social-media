@@ -157,6 +157,18 @@ public class EventService {
         }
     }
 
+    public void joinToEventByInvitation(Long eventId) {
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        Event event = getEventById(eventId);
+        if (event.isUserAMemberOfEvent(currentUser)) {
+            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
+                    String.format("You are already member of the event %s", eventId));
+        }
+        event.getAttendeesIds().add(currentUser.userId());
+        eventRepository.save(event);
+        getEventResponseById(eventId);
+    }
+
     public Object leaveEvent(Long eventId) {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         Event event = getEventById(eventId);
