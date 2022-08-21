@@ -1,5 +1,6 @@
 package pl.mmilewczyk.groupservice.model.dto;
 
+import pl.mmilewczyk.clients.event.EventResponse;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 
@@ -12,5 +13,5 @@ public record GroupResponse(Long groupId,
                             UserResponseWithId author,
                             List<UserResponseWithId> moderators,
                             List<UserResponseWithId> members,
-                            List<Long> events) {
+                            List<EventResponse> events) {
 }

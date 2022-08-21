@@ -12,6 +12,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
+import pl.mmilewczyk.clients.event.EventClient;
+import pl.mmilewczyk.clients.event.EventResponse;
 import pl.mmilewczyk.clients.post.PostClient;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserClient;
@@ -26,10 +28,12 @@ public class UtilsService {
 
     private final UserClient userClient;
     private final PostClient postClient;
+    private final EventClient eventClient;
     private final RestTemplate restTemplate;
 
     private static final String USER_NOT_FOUND_ALERT = "The requested user was not found.";
     private static final String POST_NOT_FOUND_ALERT = "The requested post was not found.";
+    private static final String EVENT_NOT_FOUND_ALERT = "The requested event was not found.";
 
     UserResponseWithId getUserByUsername(String username) {
         UserResponseWithId user = userClient.getUserByUsername(username).getBody();
@@ -65,5 +69,11 @@ public class UtilsService {
     Boolean isUserAdminOrModerator(UserResponseWithId user) {
         RoleName userRole = user.userRole();
         return userRole.equals(RoleName.ADMIN) || userRole.equals(RoleName.MODERATOR);
+    }
+
+    EventResponse getEventById(Long id) {
+        EventResponse event = eventClient.getEventById(id).getBody();
+        if (event != null) return event;
+        else throw new ResponseStatusException(HttpStatus.NOT_FOUND, EVENT_NOT_FOUND_ALERT);
     }
 }

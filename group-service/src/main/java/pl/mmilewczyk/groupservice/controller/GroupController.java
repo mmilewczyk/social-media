@@ -26,6 +26,11 @@ public class GroupController {
     }
 
     @GetMapping
+    public ResponseEntity<Page<GroupResponseLite>> getAllGroups() {
+        return status(OK).body(groupService.getAllGroups());
+    }
+
+    @GetMapping("/search/groupName")
     public ResponseEntity<Page<GroupResponseLite>> getGroupsByName(@RequestParam("groupName") String groupName) {
         return status(HttpStatus.FOUND).body(groupService.getGroupsByName(groupName));
     }
