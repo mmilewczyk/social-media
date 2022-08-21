@@ -10,6 +10,7 @@ import pl.mmilewczyk.amqp.RabbitMQMessageProducer;
 import pl.mmilewczyk.clients.event.EventResponse;
 import pl.mmilewczyk.clients.notification.NotificationClient;
 import pl.mmilewczyk.clients.notification.NotificationRequest;
+import pl.mmilewczyk.clients.post.PostRequest;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 import pl.mmilewczyk.groupservice.model.dto.GroupRequest;
@@ -214,6 +215,19 @@ public class GroupService {
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                 String.format("Post with id %s does not exist in group %s", postId, groupId));
+    }
+
+    public GroupResponse addPostToGroup(Long groupId, PostRequest postRequest) {
+        Group group = getGroupById(groupId);
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        if (group.isUserAMemberOfGroup(currentUser) || isGroupAdminOrModerator(currentUser, group)) {
+            PostResponse postResponse = utilsService.createNewPost(postRequest);
+            List<Long> postIds = group.getPostsIds();
+            postIds.add(postResponse.postId());
+            group.setPostsIds(postIds);
+            groupRepository.save(group);
+        }
+        return getGroupResponseById(groupId);
     }
 
     private boolean isGroupAdminOrModerator(UserResponseWithId user, Group group) {

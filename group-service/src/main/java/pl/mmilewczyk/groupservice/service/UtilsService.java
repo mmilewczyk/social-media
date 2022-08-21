@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.clients.event.EventClient;
 import pl.mmilewczyk.clients.event.EventResponse;
 import pl.mmilewczyk.clients.post.PostClient;
+import pl.mmilewczyk.clients.post.PostRequest;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserClient;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
@@ -75,5 +76,18 @@ public class UtilsService {
         EventResponse event = eventClient.getEventById(id).getBody();
         if (event != null) return event;
         else throw new ResponseStatusException(HttpStatus.NOT_FOUND, EVENT_NOT_FOUND_ALERT);
+    }
+
+    public PostResponse createNewPost(PostRequest postRequest) {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.add("Authorization", request.getHeader("Authorization"));
+        ResponseEntity<PostResponse> post = restTemplate.exchange(
+                "http://POST-SERVICE/api/v1/posts",
+                HttpMethod.POST,
+                new HttpEntity<>(postRequest, headers),
+                PostResponse.class);
+        if (post != null) return post.getBody();
+        else throw new ResponseStatusException(HttpStatus.NOT_FOUND, POST_NOT_FOUND_ALERT);
     }
 }

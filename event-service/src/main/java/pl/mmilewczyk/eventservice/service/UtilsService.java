@@ -13,6 +13,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.clients.post.PostClient;
+import pl.mmilewczyk.clients.post.PostRequest;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserClient;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
@@ -65,5 +66,18 @@ public class UtilsService {
     Boolean isUserAdminOrModerator(UserResponseWithId user) {
         RoleName userRole = user.userRole();
         return userRole.equals(RoleName.ADMIN) || userRole.equals(RoleName.MODERATOR);
+    }
+
+    public PostResponse createNewPost(PostRequest postRequest) {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.add("Authorization", request.getHeader("Authorization"));
+        ResponseEntity<PostResponse> post = restTemplate.exchange(
+                "http://POST-SERVICE/api/v1/posts",
+                HttpMethod.POST,
+                new HttpEntity<>(postRequest, headers),
+                PostResponse.class);
+        if (post != null) return post.getBody();
+        else throw new ResponseStatusException(HttpStatus.NOT_FOUND, POST_NOT_FOUND_ALERT);
     }
 }

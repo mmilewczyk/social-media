@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pl.mmilewczyk.clients.post.PostRequest;
 import pl.mmilewczyk.eventservice.model.dto.EventRequest;
 import pl.mmilewczyk.eventservice.model.dto.EventRequestToJoinResponse;
 import pl.mmilewczyk.eventservice.model.dto.EventResponse;
@@ -95,6 +96,12 @@ public class EventController {
     @PutMapping("requests/reject")
     public ResponseEntity<PrivateEventResponse> rejectRequestToJoinToPrivateEvent(@RequestParam Long eventRequestToJoinId) {
         return status(OK).body(eventService.rejectRequestToJoinToPrivateEvent(eventRequestToJoinId));
+    }
+
+    @PutMapping("{eventId}/create/post")
+    public ResponseEntity<EventResponse> addPostToGroup(@PathVariable("eventId") Long eventId,
+                                                        @RequestBody PostRequest postRequest) {
+        return status(CREATED).body(eventService.addPostToEvent(eventId, postRequest));
     }
 }
 

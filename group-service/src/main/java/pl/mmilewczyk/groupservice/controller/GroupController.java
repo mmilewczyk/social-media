@@ -5,11 +5,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pl.mmilewczyk.clients.post.PostRequest;
 import pl.mmilewczyk.groupservice.model.dto.GroupRequest;
 import pl.mmilewczyk.groupservice.model.dto.GroupResponse;
 import pl.mmilewczyk.groupservice.model.dto.GroupResponseLite;
 import pl.mmilewczyk.groupservice.service.GroupService;
 
+import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.ResponseEntity.status;
 
@@ -81,5 +83,11 @@ public class GroupController {
     @PutMapping("/edit/posts/remove")
     public ResponseEntity<GroupResponse> removeGroupMembersPost(@RequestParam Long groupId, @RequestParam Long postId) {
         return status(HttpStatus.ACCEPTED).body(groupService.removeGroupMembersPost(groupId, postId));
+    }
+
+    @PutMapping("{groupId}/create/post")
+    public ResponseEntity<GroupResponse> addPostToGroup(@PathVariable("groupId") Long groupId,
+                                                        @RequestBody PostRequest postRequest) {
+        return status(CREATED).body(groupService.addPostToGroup(groupId, postRequest));
     }
 }

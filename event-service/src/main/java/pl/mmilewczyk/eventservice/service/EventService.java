@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import pl.mmilewczyk.clients.post.PostRequest;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 import pl.mmilewczyk.eventservice.model.dto.EventRequest;
@@ -219,6 +220,20 @@ public class EventService {
         UserResponseWithId organizer = utilsService.getUserById(event.getOrganizerId());
         return event.mapEventToPrivateEventResponse(organizer);
     }
+
+    public EventResponse addPostToEvent(Long eventId, PostRequest postRequest) {
+        Event event = getEventById(eventId);
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        if (event.isUserAMemberOfEvent(currentUser) || isEventAdminOrModerator(currentUser, event)) {
+            PostResponse postResponse = utilsService.createNewPost(postRequest);
+            List<Long> postIds = event.getPostsIds();
+            postIds.add(postResponse.postId());
+            event.setPostsIds(postIds);
+            eventRepository.save(event);
+        }
+        return getEventResponseById(eventId);
+    }
+
 
     protected Event getEventById(Long eventId) {
         return eventRepository.findById(eventId).orElseThrow(() ->
