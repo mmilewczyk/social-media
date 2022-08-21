@@ -47,21 +47,21 @@ public class GroupInvitationService {
                         invitee.userId(),
                         InvitationStatus.INVITED);
                 groupInvitationRepository.save(groupInvitation);
+                sendEmailToTheInviteeAboutInvitationToTheGroup(groupId, groupInvitation);
             }
-            sendEmailToTheInviteeAboutInvitationToTheGroup(groupId);
         }
         assert groupInvitation != null;
         return groupInvitation.mapGroupInvitationToGroupInvitationRequest(group, inviter, invitee);
     }
 
-    private void sendEmailToTheInviteeAboutInvitationToTheGroup(Long groupId) {
+    private void sendEmailToTheInviteeAboutInvitationToTheGroup(Long groupId, GroupInvitation groupInvitation) {
         GroupResponse groupResponse = groupService.getGroupResponseById(groupId);
-        UserResponseWithId groupAuthor = groupResponse.author();
+        UserResponseWithId groupInvitee = utilsService.getUserById(groupInvitation.getInviteeId());
         NotificationRequest notificationRequest = new NotificationRequest(
-                groupAuthor.userId(),
-                groupAuthor.email(),
+                groupInvitee.userId(),
+                groupInvitee.email(),
                 String.format("Hi %s! You are invited to the group '%s'.",
-                        groupAuthor.username(), groupResponse.groupName()));
+                        groupInvitee.username(), groupResponse.groupName()));
         notificationClient.sendEmailToTheInviteeAboutInvitationToTheGroup(notificationRequest);
         rabbitMQMessageProducer.publish(notificationRequest, "internal.exchange", "internal.notification.routing-key");
     }

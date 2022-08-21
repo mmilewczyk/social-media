@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.amqp.RabbitMQMessageProducer;
+import pl.mmilewczyk.clients.event.EventResponse;
 import pl.mmilewczyk.clients.notification.NotificationClient;
 import pl.mmilewczyk.clients.notification.NotificationRequest;
 import pl.mmilewczyk.clients.post.PostResponse;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +67,13 @@ public class GroupService {
 
     public Page<GroupResponseLite> getGroupsByName(String groupName) {
         List<Group> groups = groupRepository.findGroupsByGroupNameIsLikeIgnoreCase(groupName);
+        List<GroupResponseLite> mappedGroups = new ArrayList<>();
+        groups.forEach(group -> mappedGroups.add(group.mapGroupToGroupResponseLite()));
+        return new PageImpl<>(mappedGroups);
+    }
+
+    public Page<GroupResponseLite> getAllGroups() {
+        List<Group> groups = groupRepository.findAll();
         List<GroupResponseLite> mappedGroups = new ArrayList<>();
         groups.forEach(group -> mappedGroups.add(group.mapGroupToGroupResponseLite()));
         return new PageImpl<>(mappedGroups);
@@ -232,7 +241,12 @@ public class GroupService {
                 utilsService.getUserById(group.getAuthorId()),
                 mapListOfUserResponseLiteByUsersIds(group.getModeratorsIds()),
                 mapListOfUserResponseLiteByUsersIds(group.getMembersIds()),
-                group.getEventsIds());
+                mapEventIdsToEventResponses(group.getEventsIds()));
     }
 
+    List<EventResponse> mapEventIdsToEventResponses(List<Long> eventIds) {
+        return eventIds.stream()
+                .map(utilsService::getEventById)
+                .collect(Collectors.toList());
+    }
 }

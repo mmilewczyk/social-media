@@ -43,8 +43,13 @@ public record NotificationController(NotificationService notificationService) {
         notificationService.sendEmailToTheGroupAuthorAboutDeletionOfGroup(notificationRequest);
     }
 
-    @PostMapping("/newInvitation")
+    @PostMapping("/newGroupInvitation")
     void sendEmailToTheInviteeAboutInvitationToTheGroup(NotificationRequest notificationRequest) {
         notificationService.sendEmailToTheInviteeAboutInvitationToTheGroup(notificationRequest);
+    }
+
+    @PostMapping("/newEventInvitation")
+    void sendEmailToTheInviteeAboutInvitationToTheEvent(NotificationRequest notificationRequest) {
+        notificationService.sendEmailToTheInviteeAboutInvitationToTheEvent(notificationRequest);
     }
 }
