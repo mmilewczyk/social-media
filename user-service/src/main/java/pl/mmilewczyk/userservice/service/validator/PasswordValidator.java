@@ -1,9 +1,11 @@
 package pl.mmilewczyk.userservice.service.validator;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.regex.Pattern;
+import static java.util.regex.Pattern.compile;
 
+@Slf4j
 @Component
 public class PasswordValidator {
 
@@ -18,20 +20,18 @@ public class PasswordValidator {
     }
 
     private boolean checkIfPasswordIsNotTooWeak(String password) {
-        boolean isValid = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$")
+        boolean isValid = compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$")
                 .matcher(password)
                 .matches();
-
         if (!isValid) {
-            throw new IllegalStateException("""
+            log.error("""
                     Password is too weak, password should contain:
                     - minimum eight characters,
                     - at least one uppercase letter,
                     - one lowercase letter,
                     - one number
                     """);
-        } else {
-            return isValid;
         }
+        return isValid;
     }
 }

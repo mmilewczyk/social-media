@@ -10,9 +10,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient("POST-SERVICE")
 public interface PostClient {
 
-    @GetMapping("api/v1/posts/search/id")
+    String BASE_URL = "api/v1/posts/";
+
+    @GetMapping(BASE_URL + "search/id")
     ResponseEntity<PostResponse> getPostById(@RequestParam("id") Long postId);
 
-    @PostMapping("api/v1/posts")
+    @PostMapping(BASE_URL)
     ResponseEntity<PostResponse> createNewPost(@RequestBody PostRequest postRequest);
 }

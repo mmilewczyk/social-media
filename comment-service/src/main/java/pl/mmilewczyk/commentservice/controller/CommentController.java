@@ -1,7 +1,6 @@
 package pl.mmilewczyk.commentservice.controller;
 
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.mmilewczyk.commentservice.model.dto.CommentRequest;
@@ -10,6 +9,7 @@ import pl.mmilewczyk.commentservice.service.CommentService;
 
 import java.util.List;
 
+import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.ResponseEntity.status;
 
 @RestController
@@ -18,19 +18,19 @@ public record CommentController(CommentService commentService) {
 
     @GetMapping("/{commentId}")
     ResponseEntity<CommentResponse> getCommentById(@PathVariable("commentId") Long id) {
-        return status(HttpStatus.OK).body(commentService.getCommentResponseById(id));
+        return status(OK).body(commentService.getCommentResponseById(id));
     }
 
     @PostMapping("/{postId}")
     ResponseEntity<CommentResponse> addNewCommentToThePost(
             @RequestBody CommentRequest commentRequest,
             @PathVariable("postId") Long id) {
-        return status(HttpStatus.CREATED).body(commentService.createNewComment(commentRequest, id));
+        return status(CREATED).body(commentService.createNewComment(commentRequest, id));
     }
 
     @GetMapping
     ResponseEntity<Page<CommentResponse>> getAllCommentsOfThePost(@RequestParam("postId") Long id) {
-        return status(HttpStatus.OK).body(commentService.getAllCommentsOfThePost(id));
+        return status(OK).body(commentService.getAllCommentsOfThePost(id));
     }
 
     @GetMapping("/technical/list")
@@ -39,7 +39,7 @@ public record CommentController(CommentService commentService) {
     }
 
     @DeleteMapping("/{commentId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(NO_CONTENT)
     void deleteCommentById(@PathVariable("commentId") Long commentId) {
         commentService.deleteCommentById(commentId);
     }
@@ -47,6 +47,6 @@ public record CommentController(CommentService commentService) {
     @PutMapping("/{id}")
     public ResponseEntity<CommentResponse> editCommentById(@PathVariable("id") Long commentId,
                                                            @RequestBody CommentRequest commentRequest) {
-        return status(HttpStatus.CREATED).body(commentService.editCommentById(commentId, commentRequest));
+        return status(CREATED).body(commentService.editCommentById(commentId, commentRequest));
     }
 }

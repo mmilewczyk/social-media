@@ -1,11 +1,8 @@
 package pl.mmilewczyk.userservice.service;
 
-import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
@@ -16,6 +13,14 @@ import pl.mmilewczyk.userservice.security.JwtUtils;
 import javax.servlet.DispatcherType;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Objects;
+
+import static io.jsonwebtoken.Jwts.parserBuilder;
+import static java.util.Objects.hash;
+import static javax.servlet.DispatcherType.FORWARD;
+import static javax.servlet.DispatcherType.REQUEST;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes;
 
 
 @Service
@@ -31,21 +36,21 @@ public final class UtilsService {
     public UserResponseWithId getLoggedInUser() {
         String username = getUsernameFromJwtToken();
         User user = userRepository.findByUsername(username).orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                () -> new ResponseStatusException(NOT_FOUND, "User not found"));
         return user.mapToUserResponseWithId();
     }
 
     private String getUsernameFromJwtToken() {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        HttpServletRequest request = ((ServletRequestAttributes) currentRequestAttributes()).getRequest();
         DispatcherType type = request.getDispatcherType();
         String token = null;
-        if (type == DispatcherType.FORWARD) {
-            token = (String) request.getAttribute("Authorization");
+        if (type == FORWARD) {
+            token = (String) request.getAttribute(AUTHORIZATION);
             if (token != null) {
                 token = token.split(" ")[1];
             }
-        } else if (type == DispatcherType.REQUEST) {
-            token = request.getHeader("Authorization");
+        } else if (type == REQUEST) {
+            token = request.getHeader(AUTHORIZATION);
             if (token != null) {
                 token = token.split(" ")[1];
             }
@@ -53,8 +58,9 @@ public final class UtilsService {
         if (token == null) {
             throw new NullPointerException("Token is null");
         }
-        return Jwts.parser()
+        return parserBuilder()
                 .setSigningKey(jwtUtils.getSecretKey())
+                .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
@@ -85,7 +91,7 @@ public final class UtilsService {
 
     @Override
     public int hashCode() {
-        return Objects.hash(userRepository, jwtUtils, loggedUserTest);
+        return hash(userRepository, jwtUtils, loggedUserTest);
     }
 
     @Override

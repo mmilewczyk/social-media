@@ -4,8 +4,9 @@ import org.springframework.stereotype.Service;
 import pl.mmilewczyk.userservice.model.entity.ConfirmationToken;
 import pl.mmilewczyk.userservice.repository.ConfirmationTokenRepository;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
+
+import static java.time.LocalDateTime.now;
 
 @Service
 public record ConfirmationTokenService(ConfirmationTokenRepository confirmationTokenRepository) {
@@ -19,6 +20,6 @@ public record ConfirmationTokenService(ConfirmationTokenRepository confirmationT
     }
 
     public void setConfirmedAt(String token) {
-        confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
+        confirmationTokenRepository.updateConfirmedAt(token, now());
     }
 }

@@ -3,8 +3,6 @@ package pl.mmilewczyk.postservice.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.amqp.RabbitMQMessageProducer;
@@ -21,8 +19,16 @@ import pl.mmilewczyk.postservice.repository.PostRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+
+import static java.lang.String.format;
+import static java.util.Collections.emptyList;
+import static org.springframework.data.domain.Sort.Direction.DESC;
+import static org.springframework.data.domain.Sort.by;
+import static org.springframework.http.HttpStatus.*;
+import static pl.mmilewczyk.clients.user.enums.RoleName.ADMIN;
+import static pl.mmilewczyk.clients.user.enums.RoleName.MODERATOR;
 
 @Slf4j
 @Service
@@ -40,7 +46,7 @@ public record PostService(PostRepository postRepository,
             postRepository.save(post);
             log.info("{} created new post {}", post.getAuthorId(), post.getPostId());
         } else {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "The fields cannot be empty, complete them!");
+            throw new ResponseStatusException(NOT_ACCEPTABLE, "The fields cannot be empty, complete them!");
         }
         return post.mapToPostResponse(user, null);
     }
@@ -52,7 +58,7 @@ public record PostService(PostRepository postRepository,
                 .body(postRequest.body())
                 .createdAt(LocalDateTime.now())
                 .likes(0L)
-                .commentsIds(Collections.emptyList())
+                .commentsIds(emptyList())
                 .build();
     }
 
@@ -73,7 +79,7 @@ public record PostService(PostRepository postRepository,
 
     private Boolean isUserAdminOrModerator(UserResponseWithId user) {
         RoleName userRole = user.userRole();
-        return userRole.equals(RoleName.ADMIN) || userRole.equals(RoleName.MODERATOR);
+        return userRole.equals(ADMIN) || userRole.equals(MODERATOR);
     }
 
     private void sendEmailToThePostAuthorAboutDeletionOfPost(Long postId) {
@@ -82,8 +88,7 @@ public record PostService(PostRepository postRepository,
         NotificationRequest notificationRequest = new NotificationRequest(
                 postAuthor.userId(),
                 postAuthor.email(),
-                String.format("Hi %s! Your post '%s' was deleted by a moderator.",
-                        postAuthor.username(), post.title()));
+                format("Hi %s! Your post '%s' was deleted by a moderator.", postAuthor.username(), post.title()));
         notificationClient.sendEmailToThePostAuthorAboutDeletionOfPost(notificationRequest);
         rabbitMQMessageProducer.publish(notificationRequest, "internal.exchange", "internal.notification.routing-key");
     }
@@ -97,8 +102,7 @@ public record PostService(PostRepository postRepository,
 
     public PostResponse getPostById(Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format(POST_NOT_FOUND_ALERT, postId)));
+                new ResponseStatusException(NOT_FOUND, format(POST_NOT_FOUND_ALERT, postId)));
         UserResponseWithId user = utilsService.getUserById(post.getAuthorId());
 
         List<CommentResponse> commentResponses = utilsService.getAllCommentsOfThePost(postId);
@@ -106,15 +110,15 @@ public record PostService(PostRepository postRepository,
     }
 
     private void mapCommentIdsToCommentResponses(Post post, List<CommentResponse> commentResponses) {
-        for (Long commentId : post.getCommentsIds()) {
-            commentResponses.add(utilsService.getCommentById(commentId));
-        }
+        post.getCommentsIds().stream()
+                .map(utilsService::getCommentById)
+                .forEach(commentResponses::add);
     }
 
     public void giveLike(Long id) {
         Post post = postRepository.findById(id).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format(POST_NOT_FOUND_ALERT, id)));
+                new ResponseStatusException(NOT_FOUND,
+                        format(POST_NOT_FOUND_ALERT, id)));
         post.setLikes(post.getLikes() + 1);
     }
 
@@ -126,21 +130,20 @@ public record PostService(PostRepository postRepository,
 
     private List<PostResponseLite> mapListOfPostToListOfPostResponseLite(List<Post> posts) {
         if (!posts.isEmpty()) {
-            List<PostResponseLite> mappedPosts = new ArrayList<>();
-            for (Post post : posts) {
+            List<PostResponseLite> mappedPosts = new LinkedList<>();
+            posts.forEach(post -> {
                 UserResponseWithId user = utilsService.getUserById(post.getAuthorId());
                 mappedPosts.add(post.mapToPostResponseLite(user));
-            }
+            });
             return mappedPosts;
         } else {
-            return Collections.emptyList();
+            return emptyList();
         }
     }
 
     public PostResponse updatePostById(PostRequest postRequest, Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format(POST_NOT_FOUND_ALERT, postId)));
+                new ResponseStatusException(NOT_FOUND, format(POST_NOT_FOUND_ALERT, postId)));
         UserResponseWithId authorOfPost = utilsService.getUserById(post.getAuthorId());
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         if (authorOfPost.username().equals(currentUser.username()) || isUserAdminOrModerator(currentUser)) {
@@ -154,13 +157,12 @@ public record PostService(PostRepository postRepository,
             mapCommentIdsToCommentResponses(post, commentResponses);
             return post.mapToPostResponse(authorOfPost, commentResponses);
         } else {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(UNAUTHORIZED);
         }
     }
 
     public Page<PostResponseLite> getAllLatestPosts() {
-        List<Post> posts = postRepository.findAll(
-                Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<Post> posts = postRepository.findAll(by(DESC, "createdAt"));
         List<PostResponseLite> mappedPosts = mapListOfPostToListOfPostResponseLite(posts);
         return new PageImpl<>(mappedPosts);
     }

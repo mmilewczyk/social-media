@@ -3,7 +3,9 @@ package pl.mmilewczyk.userservice.service.validator;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
+
+import static java.util.regex.Pattern.CASE_INSENSITIVE;
+import static java.util.regex.Pattern.compile;
 
 @Component
 public class EmailValidator implements Predicate<String> {
@@ -14,7 +16,7 @@ public class EmailValidator implements Predicate<String> {
     }
 
     public boolean validateEmail(String email) {
-        return Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE)
+        return compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", CASE_INSENSITIVE)
                 .matcher(email)
                 .matches();
     }

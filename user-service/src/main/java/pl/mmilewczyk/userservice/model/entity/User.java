@@ -9,10 +9,15 @@ import pl.mmilewczyk.userservice.model.enums.*;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.time.Period;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+
+import static java.lang.String.valueOf;
+import static java.time.LocalDate.now;
+import static java.time.Period.between;
+import static java.util.Collections.singletonList;
+import static javax.persistence.EnumType.STRING;
+import static javax.persistence.GenerationType.SEQUENCE;
 
 @Getter
 @Setter
@@ -26,7 +31,7 @@ public class User implements UserDetails {
 
     @Id
     @SequenceGenerator(name = "user_id_sequence", sequenceName = "user_id_sequence")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_id_sequence")
+    @GeneratedValue(strategy = SEQUENCE, generator = "user_id_sequence")
     private Long userId;
 
     @Column(nullable = false)
@@ -44,11 +49,11 @@ public class User implements UserDetails {
     @Column(name = "is_enabled")
     private Boolean isEnabled = false;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @JoinColumn(name = "user_role")
     private RoleName userRole;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     private RankName rank;
 
     private String aboutMe;
@@ -60,7 +65,7 @@ public class User implements UserDetails {
     private LocalDate birth;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     private Gender gender;
 
     @Column(nullable = false)
@@ -77,7 +82,7 @@ public class User implements UserDetails {
     private List<Language> languagesISpeak;
 
     @ElementCollection
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     @Column(nullable = false)
     private List<LookingFor> lookingFor;
 
@@ -87,7 +92,7 @@ public class User implements UserDetails {
 
     private String occupationOrJob;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     private RelationshipStatus relationshipStatus;
 
     private Long followersAmount = 0L;
@@ -154,13 +159,13 @@ public class User implements UserDetails {
     }
 
     private String calculateAge(LocalDate birthdate) {
-        return String.valueOf(Period.between(birthdate, LocalDate.now()).getYears());
+        return valueOf(between(birthdate, now()).getYears());
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         SimpleGrantedAuthority authority = new SimpleGrantedAuthority(userRole.name());
-        return Collections.singletonList(authority);
+        return singletonList(authority);
     }
 
     @Override

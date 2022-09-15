@@ -11,15 +11,17 @@ import java.util.List;
 @FeignClient("USER-SERVICE")
 public interface UserClient {
 
-    @GetMapping("api/v1/users/profile/{username}")
+    String BASE_URL = "api/v1/users/";
+
+    @GetMapping(BASE_URL + "profile/{username}")
     ResponseEntity<UserResponseWithId> getUserByUsername(@PathVariable("username") String username);
 
-    @GetMapping("api/v1/users/search/id/{id}")
+    @GetMapping(BASE_URL + "search/id/{id}")
     ResponseEntity<UserResponseWithId> getUserById(@PathVariable("id") Long userId);
 
-    @GetMapping("api/v1/users/profile/{userId}/followed")
+    @GetMapping(BASE_URL + "profile/{userId}/followed")
     ResponseEntity<Page<UserResponseWithId>> getFollowedUsersOfUserByUserId(@PathVariable("userId") Long userId);
 
-    @GetMapping("api/v1/users/profile/technical/{userId}/followed")
+    @GetMapping(BASE_URL + "profile/technical/{userId}/followed")
     List<UserResponseWithId> technicalGetFollowedUsersOfUserByUserId(@PathVariable("userId") Long userId);
 }

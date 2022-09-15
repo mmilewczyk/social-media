@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -21,7 +20,12 @@ import pl.mmilewczyk.userservice.repository.LanguageRepository;
 import pl.mmilewczyk.userservice.repository.UserRepository;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+
+import static java.lang.String.format;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Service
 @Slf4j
@@ -33,7 +37,7 @@ public record UserService(UserRepository userRepository,
     private static final String USER_NOT_FOUND_MSG = "user with username %s not found";
 
     public Page<UserResponseWithId> getAllUsers(Pageable pageable) {
-        List<UserResponseWithId> mappedUsers = new ArrayList<>();
+        List<UserResponseWithId> mappedUsers = new LinkedList<>();
         log.info("Search for all existing users from the database");
         for (User user : userRepository.findAll(pageable)) {
             mappedUsers.add(user.mapToUserResponseWithId());
@@ -44,30 +48,30 @@ public record UserService(UserRepository userRepository,
     public UserResponseWithId getUserByUsername(String username) {
         log.debug("Searching the user with username: {}", username);
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format("User with username: %s does not exist", username)))
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND,
+                        format("User with username: %s does not exist", username)))
                 .mapToUserResponseWithId();
     }
 
     public UserResponseWithId getUserByUserId(Long userId) {
         log.debug("Searching the user with id: {}", userId);
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format("User with id: %s does not exist", userId)))
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND,
+                        format("User with id: %s does not exist", userId)))
                 .mapToUserResponseWithId();
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findByUsername(username).orElseThrow(() ->
-                new UsernameNotFoundException(String.format(USER_NOT_FOUND_MSG, username)));
+                new UsernameNotFoundException(format(USER_NOT_FOUND_MSG, username)));
     }
 
     public UserResponseWithId editExistingUser(UserEditRequest userEditRequest) {
         log.debug("Searching the user with username: {}", userEditRequest.username());
         User user = userRepository.findByUsername(userEditRequest.username())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format("User with username: %s does not exist", userEditRequest.username())));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND,
+                        format("User with username: %s does not exist", userEditRequest.username())));
         log.debug("User with the username: {} has been found", userEditRequest.username());
         user.setUsername(userEditRequest.username());
         user.setFirstName(userEditRequest.firstName());
@@ -118,7 +122,7 @@ public record UserService(UserRepository userRepository,
             log.info("The edited {} data of {}({}) user has been saved", userEditRequest, user.getUsername(), user.getUserId());
         } else {
             log.info("The logged in user is not the owner of the account {}({})", user.getUsername(), user.getUserId());
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You cannot edit someone else account");
+            throw new ResponseStatusException(UNAUTHORIZED, "You cannot edit someone else account");
         }
         log.debug("Mapping properties of {} to UserResponseWithId", user);
         return user.mapToUserResponseWithId();
