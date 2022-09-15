@@ -8,28 +8,30 @@ import pl.mmilewczyk.userservice.service.FollowshipService;
 
 import java.util.List;
 
+import static org.springframework.http.ResponseEntity.ok;
+
 @RestController
 @RequestMapping("api/v1/users/profile")
 public record FriendshipController(FollowshipService followshipService) {
 
     @PutMapping("/{userId}/follow")
     public ResponseEntity<UserResponseWithId> followOtherUserById(@PathVariable("userId") Long userId) {
-        return ResponseEntity.ok(followshipService.followOtherUserById(userId));
+        return ok(followshipService.followOtherUserById(userId));
     }
 
     @PutMapping("/{userId}/unfollow")
     public ResponseEntity<UserResponseWithId> unfollowOtherUserById(@PathVariable("userId") Long userId) {
-        return ResponseEntity.ok(followshipService.unfollowOtherUserById(userId));
+        return ok(followshipService.unfollowOtherUserById(userId));
     }
 
     @GetMapping("/{userId}/followers")
     public ResponseEntity<Page<UserResponseWithId>> getFollowersOfUserByUserId(@PathVariable("userId") Long userId) {
-        return ResponseEntity.ok(followshipService.getFollowersOfUserByUserId(userId));
+        return ok(followshipService.getFollowersOfUserByUserId(userId));
     }
 
     @GetMapping("/{userId}/followed")
     public ResponseEntity<Page<UserResponseWithId>> getFollowedUsersOfUserByUserId(@PathVariable("userId") Long userId) {
-        return ResponseEntity.ok(followshipService.getFollowedUsersOfUserByUserId(userId));
+        return ok(followshipService.getFollowedUsersOfUserByUserId(userId));
     }
 
     @GetMapping("/technical/{userId}/followed")

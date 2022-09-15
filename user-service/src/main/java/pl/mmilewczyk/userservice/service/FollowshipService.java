@@ -2,7 +2,6 @@ package pl.mmilewczyk.userservice.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.userservice.model.dto.UserResponseWithId;
@@ -12,6 +11,10 @@ import pl.mmilewczyk.userservice.repository.FollowshipRepository;
 import pl.mmilewczyk.userservice.repository.UserRepository;
 
 import java.util.List;
+
+import static java.lang.String.format;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 @Service
 public record FollowshipService(FollowshipRepository followshipRepository,
@@ -46,10 +49,10 @@ public record FollowshipService(FollowshipRepository followshipRepository,
 
     public UserResponseWithId followOtherUserById(Long userId) {
         User loggedInUser = userRepository.findById(utilsService.getLoggedInUser().userId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "You are not logged in"));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "You are not logged in"));
         User userToFollow = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format("User with id: %s does not exist", userId)));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND,
+                        format("User with id: %s does not exist", userId)));
 
         Followship followship = new Followship(loggedInUser, userToFollow);
         if (loggedInUser.getFollowedAmount() == null) {
@@ -68,10 +71,10 @@ public record FollowshipService(FollowshipRepository followshipRepository,
 
     public UserResponseWithId unfollowOtherUserById(Long userId) {
         User loggedInUser = userRepository.findById(utilsService.getLoggedInUser().userId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "You are not logged in"));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "You are not logged in"));
         User userToUnfollow = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format("User with id: %s does not exist", userId)));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND,
+                        format("User with id: %s does not exist", userId)));
 
         Followship followship = followshipRepository.findTop1FollowshipByFollowedUserAndFollowingUser(userToUnfollow, loggedInUser);
         if (loggedInUser.getFollowedAmount() == null) {
@@ -83,7 +86,7 @@ public record FollowshipService(FollowshipRepository followshipRepository,
         }
         userToUnfollow.setFollowersAmount(userToUnfollow.getFollowersAmount() - 1);
         if (followship == null) {
-            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "You don't follow this user");
+            throw new ResponseStatusException(NO_CONTENT, "You don't follow this user");
         }
         followshipRepository.delete(followship);
         userRepository.save(loggedInUser);

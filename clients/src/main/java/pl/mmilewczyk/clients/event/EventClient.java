@@ -8,6 +8,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient("EVENT-SERVICE")
 public interface EventClient {
 
-    @GetMapping("api/v1/events")
+    String BASE_URL = "api/v1/events/";
+
+    @GetMapping(BASE_URL)
     ResponseEntity<EventResponse> getEventById(@RequestParam Long eventId);
+
+    @GetMapping(BASE_URL + "tech/isUserAdminOrModerator")
+    boolean isEventAdminOrModerator(@RequestParam Long userId, @RequestParam Long eventId);
 }

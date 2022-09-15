@@ -13,6 +13,8 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static javax.persistence.GenerationType.SEQUENCE;
+
 @Entity
 @Data
 @Builder
@@ -22,7 +24,7 @@ public class Post {
 
     @Id
     @SequenceGenerator(name = "post_id_sequence", sequenceName = "post_id_sequence")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "post_id_sequence")
+    @GeneratedValue(strategy = SEQUENCE, generator = "post_id_sequence")
     private Long postId;
     private String title;
     private Long authorId;

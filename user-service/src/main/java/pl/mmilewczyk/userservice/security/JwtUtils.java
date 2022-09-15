@@ -7,7 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Base64;
+
+import static java.util.Base64.getEncoder;
 
 @Component
 @Data
@@ -29,6 +30,6 @@ public class JwtUtils {
 
     @PostConstruct
     protected void init() {
-        secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
+        secretKey = getEncoder().encodeToString(secretKey.getBytes());
     }
 }

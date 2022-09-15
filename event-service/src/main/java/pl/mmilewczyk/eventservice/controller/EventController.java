@@ -4,11 +4,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import pl.mmilewczyk.clients.post.PostRequest;
+import pl.mmilewczyk.clients.user.UserResponseWithId;
 import pl.mmilewczyk.eventservice.model.dto.EventRequest;
 import pl.mmilewczyk.eventservice.model.dto.EventRequestToJoinResponse;
 import pl.mmilewczyk.eventservice.model.dto.EventResponse;
 import pl.mmilewczyk.eventservice.model.dto.PrivateEventResponse;
+import pl.mmilewczyk.eventservice.model.entity.Event;
 import pl.mmilewczyk.eventservice.service.EventService;
+import pl.mmilewczyk.eventservice.service.UtilsService;
 
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.ResponseEntity.status;
@@ -19,10 +24,21 @@ import static org.springframework.http.ResponseEntity.status;
 public class EventController {
 
     private final EventService eventService;
+    private final UtilsService utilsService;
 
     @GetMapping
     public ResponseEntity<EventResponse> getEventById(@RequestParam Long eventId) {
         return status(FOUND).body(eventService.getEventResponseById(eventId));
+    }
+
+    @GetMapping("/tech/isUserAdminOrModerator")
+    public boolean isEventAdminOrModerator(@RequestParam Long userId, @RequestParam Long eventId) {
+        Event event = eventService.getEventById(eventId);
+        UserResponseWithId user = utilsService.getUserById(userId);
+        if (event == null || user == null) {
+            throw new ResponseStatusException(NOT_FOUND);
+        }
+        return eventService.isEventAdminOrModerator(user, event);
     }
 
     @GetMapping("/{name}")
@@ -95,6 +111,12 @@ public class EventController {
     @PutMapping("requests/reject")
     public ResponseEntity<PrivateEventResponse> rejectRequestToJoinToPrivateEvent(@RequestParam Long eventRequestToJoinId) {
         return status(OK).body(eventService.rejectRequestToJoinToPrivateEvent(eventRequestToJoinId));
+    }
+
+    @PutMapping("{eventId}/create/post")
+    public ResponseEntity<EventResponse> addPostToGroup(@PathVariable("eventId") Long eventId,
+                                                        @RequestBody PostRequest postRequest) {
+        return status(CREATED).body(eventService.addPostToEvent(eventId, postRequest));
     }
 }
 

@@ -10,6 +10,8 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static javax.persistence.GenerationType.SEQUENCE;
+
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,7 +24,7 @@ public class Event {
     @Id
     @Column(name = "event_id", nullable = false)
     @SequenceGenerator(name = "event_id_sequence", sequenceName = "event_id_sequence")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "event_id_sequence")
+    @GeneratedValue(strategy = SEQUENCE, generator = "event_id_sequence")
     private Long eventId;
 
     private String name;

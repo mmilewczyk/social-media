@@ -3,13 +3,13 @@ package pl.mmilewczyk.groupservice.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.amqp.RabbitMQMessageProducer;
 import pl.mmilewczyk.clients.event.EventResponse;
 import pl.mmilewczyk.clients.notification.NotificationClient;
 import pl.mmilewczyk.clients.notification.NotificationRequest;
+import pl.mmilewczyk.clients.post.PostRequest;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 import pl.mmilewczyk.groupservice.model.dto.GroupRequest;
@@ -18,11 +18,13 @@ import pl.mmilewczyk.groupservice.model.dto.GroupResponseLite;
 import pl.mmilewczyk.groupservice.model.entity.Group;
 import pl.mmilewczyk.groupservice.repository.GroupRepository;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static java.lang.String.format;
+import static java.util.Collections.emptyList;
+import static org.springframework.http.HttpStatus.*;
 
 @Service
 @RequiredArgsConstructor
@@ -40,41 +42,41 @@ public class GroupService {
         Group newGroup = new Group(
                 groupRequest.groupName(),
                 groupRequest.description(),
-                Collections.emptyList(),
+                emptyList(),
                 currentUser.userId(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList());
+                emptyList(),
+                emptyList(),
+                emptyList());
         if (newGroup.isComplete()) {
             groupRepository.saveAndFlush(newGroup);
         } else {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "All fields should be filed");
+            throw new ResponseStatusException(NOT_ACCEPTABLE, "All fields should be filed");
         }
         return getGroupResponseById(newGroup.getGroupId());
     }
 
     private List<PostResponse> mapListOfPostResponseByPostsIds(Collection<Long> postIds) {
-        List<PostResponse> finalPostList = new ArrayList<>();
+        List<PostResponse> finalPostList = new LinkedList<>();
         postIds.forEach(postId -> finalPostList.add(utilsService.getPostById(postId)));
         return finalPostList;
     }
 
     private List<UserResponseWithId> mapListOfUserResponseLiteByUsersIds(Collection<Long> userIds) {
-        List<UserResponseWithId> finalUserResponseList = new ArrayList<>();
+        List<UserResponseWithId> finalUserResponseList = new LinkedList<>();
         userIds.forEach(userId -> finalUserResponseList.add(utilsService.getUserById(userId)));
         return finalUserResponseList;
     }
 
     public Page<GroupResponseLite> getGroupsByName(String groupName) {
         List<Group> groups = groupRepository.findGroupsByGroupNameIsLikeIgnoreCase(groupName);
-        List<GroupResponseLite> mappedGroups = new ArrayList<>();
+        List<GroupResponseLite> mappedGroups = new LinkedList<>();
         groups.forEach(group -> mappedGroups.add(group.mapGroupToGroupResponseLite()));
         return new PageImpl<>(mappedGroups);
     }
 
     public Page<GroupResponseLite> getAllGroups() {
         List<Group> groups = groupRepository.findAll();
-        List<GroupResponseLite> mappedGroups = new ArrayList<>();
+        List<GroupResponseLite> mappedGroups = new LinkedList<>();
         groups.forEach(group -> mappedGroups.add(group.mapGroupToGroupResponseLite()));
         return new PageImpl<>(mappedGroups);
     }
@@ -96,7 +98,7 @@ public class GroupService {
         NotificationRequest notificationRequest = new NotificationRequest(
                 groupAuthor.userId(),
                 groupAuthor.email(),
-                String.format("Hi %s! Your group '%s' was deleted by a moderator.",
+                format("Hi %s! Your group '%s' was deleted by a moderator.",
                         groupAuthor.username(), groupResponse.groupName()));
         notificationClient.sendEmailToTheGroupAuthorAboutDeletionOfGroup(notificationRequest);
         rabbitMQMessageProducer.publish(notificationRequest, "internal.exchange", "internal.notification.routing-key");
@@ -106,8 +108,7 @@ public class GroupService {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         Group group = getGroupById(groupId);
         if (group.isUserAMemberOfGroup(currentUser)) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
-                    String.format("You are already member of the group %s", groupId));
+            throw new ResponseStatusException(NOT_ACCEPTABLE, format("You are already member of the group %s", groupId));
         } else {
             group.getMembersIds().add(currentUser.userId());
             groupRepository.save(group);
@@ -122,8 +123,7 @@ public class GroupService {
             group.getMembersIds().remove(currentUser.userId());
             groupRepository.save(group);
         } else {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
-                    String.format("You are not a member of the group %s", groupId));
+            throw new ResponseStatusException(NOT_ACCEPTABLE, format("You are not a member of the group %s", groupId));
         }
         return getGroupResponseById(groupId);
     }
@@ -134,14 +134,14 @@ public class GroupService {
         Group group = getGroupById(groupId);
         if (group.getAuthorId().equals(currentUser.userId())) {
             if (group.getModeratorsIds().contains(userId)) {
-                throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, String.format(
+                throw new ResponseStatusException(NOT_ACCEPTABLE, format(
                         "User %s is aldread a moderator of the group %s", user.username(), groupId));
             } else {
                 group.getModeratorsIds().add(userId);
                 groupRepository.save(group);
             }
         } else {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not owner of the group");
+            throw new ResponseStatusException(UNAUTHORIZED, "You are not owner of the group");
         }
         return getGroupResponseById(groupId);
     }
@@ -151,10 +151,10 @@ public class GroupService {
         UserResponseWithId user = utilsService.getUserById(userId);
         Group group = getGroupById(groupId);
         if (!group.getAuthorId().equals(currentUser.userId())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not owner of the group");
+            throw new ResponseStatusException(UNAUTHORIZED, "You are not owner of the group");
         }
         if (!group.getModeratorsIds().contains(userId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, String.format(
+            throw new ResponseStatusException(NOT_ACCEPTABLE, format(
                     "User %s is aldread not a moderator of the group %s", user.username(), groupId));
         }
         group.getModeratorsIds().remove(userId);
@@ -173,7 +173,7 @@ public class GroupService {
                     group.getMembersIds().remove(userToRemoveId);
                     groupRepository.save(group);
                 } else {
-                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not the group owner to remove a moderator");
+                    throw new ResponseStatusException(UNAUTHORIZED, "You are not the group owner to remove a moderator");
                 }
             } else if (group.getModeratorsIds().contains(currentUser.userId()) || group.getAuthorId().equals(currentUser.userId())) {
                 group.getModeratorsIds().remove(userToRemoveId);
@@ -181,7 +181,7 @@ public class GroupService {
                 groupRepository.save(group);
             }
         } else {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "The user you are trying to remove is not a member of the group");
+            throw new ResponseStatusException(NOT_ACCEPTABLE, "The user you are trying to remove is not a member of the group");
         }
         return getGroupResponseById(groupId);
     }
@@ -210,10 +210,39 @@ public class GroupService {
                 groupRepository.save(group);
                 return getGroupResponseById(groupId);
             }
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not owner or moderator of the group");
+            throw new ResponseStatusException(UNAUTHORIZED, "You are not owner or moderator of the group");
         }
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                String.format("Post with id %s does not exist in group %s", postId, groupId));
+        throw new ResponseStatusException(NOT_FOUND,
+                format("Post with id %s does not exist in group %s", postId, groupId));
+    }
+
+    public GroupResponse addPostToGroup(Long groupId, PostRequest postRequest) {
+        Group group = getGroupById(groupId);
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        if (group.isUserAMemberOfGroup(currentUser) || isGroupAdminOrModerator(currentUser, group)) {
+            PostResponse postResponse = utilsService.createNewPost(postRequest);
+            List<Long> postIds = group.getPostsIds();
+            postIds.add(postResponse.postId());
+            group.setPostsIds(postIds);
+            groupRepository.save(group);
+        }
+        return getGroupResponseById(groupId);
+    }
+
+    public GroupResponse connectEventToGroup(Long groupId, Long eventId) {
+        Group group = getGroupById(groupId);
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        if (isGroupAdminOrModerator(currentUser, group)) {
+            EventResponse event = utilsService.getEventById(eventId);
+            boolean isEventAdminOrModerator = utilsService.isEventAdminOrModerator(currentUser.userId(), eventId);
+            if (event != null && isEventAdminOrModerator) {
+                List<Long> eventsIds = group.getEventsIds();
+                eventsIds.add(eventId);
+                group.setEventsIds(eventsIds);
+                groupRepository.save(group);
+            }
+        }
+        return getGroupResponseById(groupId);
     }
 
     private boolean isGroupAdminOrModerator(UserResponseWithId user, Group group) {
@@ -228,8 +257,7 @@ public class GroupService {
 
     private Group getGroupById(Long groupId) {
         return groupRepository.findById(groupId).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format(GROUP_NOT_FOUND_ALERT, groupId)));
+                new ResponseStatusException(NOT_FOUND, format(GROUP_NOT_FOUND_ALERT, groupId)));
     }
 
     private GroupResponse mapGroupToGroupResponse(Group group) {
@@ -247,6 +275,6 @@ public class GroupService {
     List<EventResponse> mapEventIdsToEventResponses(List<Long> eventIds) {
         return eventIds.stream()
                 .map(utilsService::getEventById)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

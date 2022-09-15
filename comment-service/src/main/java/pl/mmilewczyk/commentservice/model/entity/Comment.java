@@ -10,6 +10,8 @@ import pl.mmilewczyk.commentservice.model.dto.CommentResponse;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+import static javax.persistence.GenerationType.SEQUENCE;
+
 @Entity
 @Data
 @Builder
@@ -19,7 +21,7 @@ public class Comment {
 
     @Id
     @SequenceGenerator(name = "comment_id_sequence", sequenceName = "comment_id_sequence")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "comment_id_sequence")
+    @GeneratedValue(strategy = SEQUENCE, generator = "comment_id_sequence")
     private Long commentId;
 
     private Long postId;

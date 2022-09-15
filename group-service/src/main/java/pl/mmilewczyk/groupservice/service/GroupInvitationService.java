@@ -1,7 +1,6 @@
 package pl.mmilewczyk.groupservice.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.amqp.RabbitMQMessageProducer;
@@ -13,6 +12,11 @@ import pl.mmilewczyk.groupservice.model.dto.GroupResponse;
 import pl.mmilewczyk.groupservice.model.entity.GroupInvitation;
 import pl.mmilewczyk.groupservice.model.enums.InvitationStatus;
 import pl.mmilewczyk.groupservice.repository.GroupInvitationRepository;
+
+import static java.lang.String.format;
+import static org.springframework.http.HttpStatus.*;
+import static pl.mmilewczyk.groupservice.model.enums.InvitationStatus.INVITED;
+import static pl.mmilewczyk.groupservice.model.enums.InvitationStatus.REJECTED;
 
 @RequiredArgsConstructor
 @Service
@@ -33,19 +37,19 @@ public class GroupInvitationService {
         GroupInvitation groupInvitation = null;
         if (invitee != null && inviter != null && group != null) {
             if (inviter.userId().equals(invitee.userId())) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You cannot invite yourself to the group");
+                throw new ResponseStatusException(UNAUTHORIZED, "You cannot invite yourself to the group");
             } else if (group.members().contains(invitee)) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, String.format(
+                throw new ResponseStatusException(UNAUTHORIZED, format(
                         "User %s is aldread a member of the group %s", invitee.username(), groupId));
             } else if (group.members().contains(inviter)) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, String.format(
+                throw new ResponseStatusException(UNAUTHORIZED, format(
                         "You have to be a member of the group %s to invite other users", groupId));
             } else {
                 groupInvitation = new GroupInvitation(
                         groupId,
                         inviter.userId(),
                         invitee.userId(),
-                        InvitationStatus.INVITED);
+                        INVITED);
                 groupInvitationRepository.save(groupInvitation);
                 sendEmailToTheInviteeAboutInvitationToTheGroup(groupId, groupInvitation);
             }
@@ -60,7 +64,7 @@ public class GroupInvitationService {
         NotificationRequest notificationRequest = new NotificationRequest(
                 groupInvitee.userId(),
                 groupInvitee.email(),
-                String.format("Hi %s! You are invited to the group '%s'.",
+                format("Hi %s! You are invited to the group '%s'.",
                         groupInvitee.username(), groupResponse.groupName()));
         notificationClient.sendEmailToTheInviteeAboutInvitationToTheGroup(notificationRequest);
         rabbitMQMessageProducer.publish(notificationRequest, "internal.exchange", "internal.notification.routing-key");
@@ -68,23 +72,23 @@ public class GroupInvitationService {
 
     public GroupResponse acceptInvitationToGroup(Long groupInvitationId) {
         GroupInvitation groupInvitation = groupInvitationRepository.findById(groupInvitationId).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format(GROUP_INVITATION_NOT_FOUND_ALERT, groupInvitationId)));
+                new ResponseStatusException(NOT_FOUND,
+                        format(GROUP_INVITATION_NOT_FOUND_ALERT, groupInvitationId)));
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         if (groupInvitation.getInviteeId().equals(currentUser.userId()) || utilsService.isUserAdminOrModerator(currentUser)) {
             switch (groupInvitation.getStatus()) {
-                case REJECTED -> throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
+                case REJECTED -> throw new ResponseStatusException(NOT_ACCEPTABLE,
                         "You have already rejected the invitation to group " + groupInvitation.getGroupId());
                 case INVITED -> {
                     groupInvitation.setStatus(InvitationStatus.ACCEPTED);
                     groupInvitationRepository.save(groupInvitation);
                     groupService.joinToGroup(groupInvitation.getGroupId());
                 }
-                case ACCEPTED -> throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
+                case ACCEPTED -> throw new ResponseStatusException(NOT_ACCEPTABLE,
                         "You have already accepted the invitation to group " + groupInvitation.getGroupId());
             }
         } else {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+            throw new ResponseStatusException(UNAUTHORIZED,
                     "You are not invited to group " + groupInvitation.getGroupId());
         }
         return groupService.getGroupResponseById(groupInvitation.getGroupId());
@@ -92,22 +96,22 @@ public class GroupInvitationService {
 
     public GroupResponse rejectInvitationToGroup(Long groupInvitationId) {
         GroupInvitation groupInvitation = groupInvitationRepository.findById(groupInvitationId).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format(GROUP_INVITATION_NOT_FOUND_ALERT, groupInvitationId)));
+                new ResponseStatusException(NOT_FOUND,
+                        format(GROUP_INVITATION_NOT_FOUND_ALERT, groupInvitationId)));
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         if (groupInvitation.getInviteeId().equals(currentUser.userId()) || utilsService.isUserAdminOrModerator(currentUser)) {
             switch (groupInvitation.getStatus()) {
-                case REJECTED -> throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
+                case REJECTED -> throw new ResponseStatusException(NOT_ACCEPTABLE,
                         "You have already rejected the invitation to group " + groupInvitation.getGroupId());
                 case INVITED -> {
-                    groupInvitation.setStatus(InvitationStatus.REJECTED);
+                    groupInvitation.setStatus(REJECTED);
                     groupInvitationRepository.save(groupInvitation);
                 }
-                case ACCEPTED -> throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
+                case ACCEPTED -> throw new ResponseStatusException(NOT_ACCEPTABLE,
                         "You have already accepted the invitation to group " + groupInvitation.getGroupId());
             }
         } else {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+            throw new ResponseStatusException(UNAUTHORIZED,
                     "You are not invited to group " + groupInvitation.getGroupId());
         }
         return groupService.getGroupResponseById(groupInvitation.getGroupId());

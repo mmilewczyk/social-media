@@ -3,9 +3,9 @@ package pl.mmilewczyk.eventservice.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import pl.mmilewczyk.clients.post.PostRequest;
 import pl.mmilewczyk.clients.post.PostResponse;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 import pl.mmilewczyk.eventservice.model.dto.EventRequest;
@@ -14,14 +14,21 @@ import pl.mmilewczyk.eventservice.model.dto.EventResponse;
 import pl.mmilewczyk.eventservice.model.dto.PrivateEventResponse;
 import pl.mmilewczyk.eventservice.model.entity.Event;
 import pl.mmilewczyk.eventservice.model.entity.EventRequestToJoin;
-import pl.mmilewczyk.eventservice.model.enums.Status;
 import pl.mmilewczyk.eventservice.repository.EventRepository;
 import pl.mmilewczyk.eventservice.repository.EventRequestToJoinRepository;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
+import static java.lang.String.format;
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
+import static org.springframework.http.HttpStatus.*;
+import static pl.mmilewczyk.eventservice.model.enums.Status.ACCEPTED;
+import static pl.mmilewczyk.eventservice.model.enums.Status.*;
 
 @Service
 @RequiredArgsConstructor
@@ -58,11 +65,11 @@ public class EventService {
                 .hashtags(eventRequest.hashtags())
                 .attendeesIds(List.of(organizer.userId()))
                 .moderatorsIds(List.of(organizer.userId()))
-                .postsIds(Collections.emptyList())
+                .postsIds(emptyList())
                 .build();
 
         if (!newEvent.areDatesCorrect()) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Incorrect dates");
+            throw new ResponseStatusException(NOT_ACCEPTABLE, "Incorrect dates");
         }
         eventRepository.save(newEvent);
         return getEventResponseById(newEvent.getEventId());
@@ -72,7 +79,7 @@ public class EventService {
         Event event = getEventById(eventId);
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         if (!isEventAdminOrModerator(currentUser, event)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+            throw new ResponseStatusException(UNAUTHORIZED,
                     "You must be the event organizer or application moderator to delete this event.");
         }
         eventRepository.delete(event);
@@ -83,10 +90,10 @@ public class EventService {
         UserResponseWithId user = utilsService.getUserById(userId);
         Event event = getEventById(eventId);
         if (!event.getOrganizerId().equals(currentUser.userId())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not owner of the event");
+            throw new ResponseStatusException(UNAUTHORIZED, "You are not owner of the event");
         }
         if (event.getModeratorsIds().contains(userId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, String.format(
+            throw new ResponseStatusException(NOT_ACCEPTABLE, format(
                     "User %s is aldread a moderator of the event %s", user.username(), eventId));
         }
         event.getModeratorsIds().add(userId);
@@ -100,10 +107,10 @@ public class EventService {
         UserResponseWithId user = utilsService.getUserById(userId);
         Event event = getEventById(eventId);
         if (!event.getOrganizerId().equals(currentUser.userId())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not owner of the event");
+            throw new ResponseStatusException(UNAUTHORIZED, "You are not owner of the event");
         }
         if (!event.getModeratorsIds().contains(userId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, String.format(
+            throw new ResponseStatusException(NOT_ACCEPTABLE, format(
                     "User %s is aldread not a moderator of the event %s", user.username(), eventId));
         }
         event.getModeratorsIds().remove(userId);
@@ -117,7 +124,7 @@ public class EventService {
         Event event = getEventById(eventId);
 
         if (!isEventAdminOrModerator(currentUser, event)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only the organizer can edit the event");
+            throw new ResponseStatusException(UNAUTHORIZED, "Only the organizer can edit the event");
         }
         event.setName(eventRequest.name());
         event.setStartAt(eventRequest.startAt());
@@ -127,14 +134,14 @@ public class EventService {
         event.setDescription(eventRequest.description());
         event.setHashtags(eventRequest.hashtags());
         eventRepository.saveAndFlush(event);
-        if (Boolean.FALSE.equals(event.getIsPrivate())) {
+        if (FALSE.equals(event.getIsPrivate())) {
             getPendingRequestsToPrivateJoin(eventId).get()
                     .forEach(request -> acceptRequestToJoinToPrivateEvent(request.eventRequestToJoinId()));
         }
         return getEventResponseById(eventId);
     }
 
-    private boolean isEventAdminOrModerator(UserResponseWithId user, Event event) {
+    public boolean isEventAdminOrModerator(UserResponseWithId user, Event event) {
         return utilsService.isUserAdminOrModerator(user) ||
                 event.getModeratorsIds().contains(user.userId()) ||
                 event.getOrganizerId().equals(user.userId());
@@ -144,10 +151,10 @@ public class EventService {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         Event event = getEventById(eventId);
         if (event.isUserAMemberOfEvent(currentUser)) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
-                    String.format("You are already member of the event %s", eventId));
+            throw new ResponseStatusException(NOT_ACCEPTABLE,
+                    format("You are already member of the event %s", eventId));
         }
-        if (Boolean.TRUE.equals(event.getIsPrivate())) {
+        if (TRUE.equals(event.getIsPrivate())) {
             requestToJoinToPrivateEvent(eventId);
             return getPrivateEventResponseById(eventId);
         } else {
@@ -161,8 +168,8 @@ public class EventService {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         Event event = getEventById(eventId);
         if (event.isUserAMemberOfEvent(currentUser)) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
-                    String.format("You are already member of the event %s", eventId));
+            throw new ResponseStatusException(NOT_ACCEPTABLE,
+                    format("You are already member of the event %s", eventId));
         }
         event.getAttendeesIds().add(currentUser.userId());
         eventRepository.save(event);
@@ -173,8 +180,8 @@ public class EventService {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         Event event = getEventById(eventId);
         if (!event.isUserAMemberOfEvent(currentUser)) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE,
-                    String.format("You are already not a member of the event %s", eventId));
+            throw new ResponseStatusException(NOT_ACCEPTABLE,
+                    format("You are already not a member of the event %s", eventId));
         }
         event.getAttendeesIds().remove(currentUser.userId());
         eventRepository.save(event);
@@ -188,11 +195,11 @@ public class EventService {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         Event event = getEventById(eventId);
         if (!event.getAttendeesIds().contains(userToRemoveId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "The user you are trying to remove is not a member of the event");
+            throw new ResponseStatusException(NOT_ACCEPTABLE, "The user you are trying to remove is not a member of the event");
         }
         if (event.getModeratorsIds().contains(userToRemoveId) || event.getOrganizerId().equals(userToRemoveId)) {
             if (!event.getOrganizerId().equals(currentUser.userId())) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not the event owner to remove a moderator");
+                throw new ResponseStatusException(UNAUTHORIZED, "You are not the event owner to remove a moderator");
             }
             event.getModeratorsIds().remove(userToRemoveId);
             event.getAttendeesIds().remove(userToRemoveId);
@@ -220,29 +227,42 @@ public class EventService {
         return event.mapEventToPrivateEventResponse(organizer);
     }
 
-    protected Event getEventById(Long eventId) {
+    public EventResponse addPostToEvent(Long eventId, PostRequest postRequest) {
+        Event event = getEventById(eventId);
+        UserResponseWithId currentUser = utilsService.getCurrentUser();
+        if (event.isUserAMemberOfEvent(currentUser) || isEventAdminOrModerator(currentUser, event)) {
+            PostResponse postResponse = utilsService.createNewPost(postRequest);
+            List<Long> postIds = event.getPostsIds();
+            postIds.add(postResponse.postId());
+            event.setPostsIds(postIds);
+            eventRepository.save(event);
+        }
+        return getEventResponseById(eventId);
+    }
+
+
+    public Event getEventById(Long eventId) {
         return eventRepository.findById(eventId).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format(EVENT_NOT_FOUND_ALERT, eventId)));
+                new ResponseStatusException(NOT_FOUND, format(EVENT_NOT_FOUND_ALERT, eventId)));
     }
 
     private List<UserResponseWithId> getListOfUserResponsesByIds(List<Long> userIds) {
         return userIds.stream()
                 .map(utilsService::getUserById)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     private List<PostResponse> getListOfPostResponsesByIds(List<Long> postIds) {
         return postIds.stream()
                 .map(utilsService::getPostById)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     public Page<EventRequestToJoinResponse> getCurrentUsersRequestsToJoinToPrivateEvent() {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         List<EventRequestToJoin> eventRequestToJoins = eventRequestToJoinRepository
                 .getEventRequestToJoinsByPersonJoiningId(currentUser.userId());
-        List<EventRequestToJoinResponse> responses = new ArrayList<>();
+        List<EventRequestToJoinResponse> responses = new LinkedList<>();
         eventRequestToJoins.forEach(eventRequestToJoin -> {
             EventResponse event = getEventResponseById(eventRequestToJoin.getEventId());
             UserResponseWithId userJoining = utilsService.getUserById(eventRequestToJoin.getPersonJoiningId());
@@ -255,10 +275,10 @@ public class EventService {
         EventResponse event = getEventResponseById(eventId);
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         if (!event.moderators().contains(currentUser) || !event.organizer().userId().equals(currentUser.userId())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You must be a moderator to view requests to join the event");
+            throw new ResponseStatusException(UNAUTHORIZED, "You must be a moderator to view requests to join the event");
         }
         List<EventRequestToJoin> eventRequestToJoinList = eventRequestToJoinRepository
-                .getEventRequestToJoinsByStatusAndEventId(Status.PENDIND, eventId);
+                .getEventRequestToJoinsByStatusAndEventId(PENDIND, eventId);
         List<EventRequestToJoinResponse> responses = new ArrayList<>();
         eventRequestToJoinList.forEach(eventRequestToJoin -> {
             UserResponseWithId userJoining = utilsService.getUserById(eventRequestToJoin.getPersonJoiningId());
@@ -272,9 +292,9 @@ public class EventService {
         UserResponseWithId currentUser = utilsService.getCurrentUser();
 
         if (event.attendees().contains(currentUser) || event.organizer().equals(currentUser)) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "You are already a participant of the event");
+            throw new ResponseStatusException(NOT_ACCEPTABLE, "You are already a participant of the event");
         }
-        EventRequestToJoin eventRequestToJoin = new EventRequestToJoin(eventId, currentUser.userId(), Status.PENDIND);
+        EventRequestToJoin eventRequestToJoin = new EventRequestToJoin(eventId, currentUser.userId(), PENDIND);
         eventRequestToJoinRepository.save(eventRequestToJoin);
         return getPrivateEventResponseById(eventId);
     }
@@ -284,16 +304,16 @@ public class EventService {
         Event event = getEventById(eventRequestToJoin.getEventId());
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         if (!event.getModeratorsIds().contains(currentUser.userId()) || !event.getOrganizerId().equals(currentUser.userId())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not authorized to accept requests to join the event");
+            throw new ResponseStatusException(UNAUTHORIZED, "You are not authorized to accept requests to join the event");
         }
         List<Long> attendees = event.getAttendeesIds();
         if (attendees.contains(eventRequestToJoin.getPersonJoiningId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "The user is already a participant in the event");
+            throw new ResponseStatusException(NOT_ACCEPTABLE, "The user is already a participant in the event");
         }
         attendees.add(eventRequestToJoin.getPersonJoiningId());
         event.setAttendeesIds(attendees);
         eventRepository.save(event);
-        eventRequestToJoin.setStatus(Status.ACCEPTED);
+        eventRequestToJoin.setStatus(ACCEPTED);
         eventRequestToJoinRepository.save(eventRequestToJoin);
         return getEventResponseById(event.getEventId());
     }
@@ -303,19 +323,19 @@ public class EventService {
         Event event = getEventById(eventRequestToJoin.getEventId());
         UserResponseWithId currentUser = utilsService.getCurrentUser();
         if (!event.getModeratorsIds().contains(currentUser.userId()) || !event.getOrganizerId().equals(currentUser.userId())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You are not authorized to accept requests to join the event");
+            throw new ResponseStatusException(UNAUTHORIZED, "You are not authorized to accept requests to join the event");
         }
         if (event.getAttendeesIds().contains(eventRequestToJoin.getPersonJoiningId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "The user is already a participant in the event");
+            throw new ResponseStatusException(NOT_ACCEPTABLE, "The user is already a participant in the event");
         }
-        eventRequestToJoin.setStatus(Status.REJECTED);
+        eventRequestToJoin.setStatus(REJECTED);
         eventRequestToJoinRepository.save(eventRequestToJoin);
         return getPrivateEventResponseById(event.getEventId());
     }
 
     private EventRequestToJoin getEventRequestToJoinById(Long eventRequestToJoinId) {
         return eventRequestToJoinRepository.findById(eventRequestToJoinId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        String.format(EVENT_REQUEST_TO_JOIN_NOT_FOUND_ALERT, eventRequestToJoinId)));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND,
+                        format(EVENT_REQUEST_TO_JOIN_NOT_FOUND_ALERT, eventRequestToJoinId)));
     }
 }

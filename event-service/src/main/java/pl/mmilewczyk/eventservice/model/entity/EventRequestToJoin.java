@@ -6,7 +6,12 @@ import pl.mmilewczyk.eventservice.model.dto.EventRequestToJoinResponse;
 import pl.mmilewczyk.eventservice.model.dto.EventResponse;
 import pl.mmilewczyk.eventservice.model.enums.Status;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+
+import static javax.persistence.GenerationType.SEQUENCE;
 
 @Entity
 @NoArgsConstructor
@@ -18,7 +23,7 @@ public class EventRequestToJoin {
 
     @Id
     @SequenceGenerator(name = "event_request_to_join_id_sequence", sequenceName = "event_request_to_join_id_sequence")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "event_request_to_join_id_sequence")
+    @GeneratedValue(strategy = SEQUENCE, generator = "event_request_to_join_id_sequence")
     private Long eventRequestToJoinId;
 
     private Long eventId;

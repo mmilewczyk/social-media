@@ -8,7 +8,8 @@ import pl.mmilewczyk.notificationservice.model.dto.NotificationRequest;
 import pl.mmilewczyk.notificationservice.model.entity.Notification;
 import pl.mmilewczyk.notificationservice.repository.NotificationRepository;
 
-import java.time.LocalDateTime;
+import static java.lang.String.format;
+import static java.time.LocalDateTime.now;
 
 @Slf4j
 @Service
@@ -23,7 +24,7 @@ public record NotificationService(NotificationRepository notificationRepository,
                         .toUserEmail(notificationRequest.toUserEmail())
                         .sender("social-media")
                         .message(notificationRequest.message())
-                        .sentAt(LocalDateTime.now())
+                        .sentAt(now())
                         .build()
         );
     }
@@ -33,7 +34,7 @@ public record NotificationService(NotificationRepository notificationRepository,
         message.setFrom(APPLICATION_EMAIL);
         message.setTo(toEmail);
         message.setSubject("Confirm your account");
-        message.setText(String.format("""
+        message.setText(format("""
                 Hello,
                 Please verify the email address used with your SocialMedia account by clicking this link:
                 %s
