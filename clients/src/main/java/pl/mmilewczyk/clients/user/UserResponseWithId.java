@@ -1,7 +1,10 @@
 package pl.mmilewczyk.clients.user;
 
-import pl.mmilewczyk.clients.user.enums.*;
+import pl.mmilewczyk.clients.user.enums.LookingFor;
+import pl.mmilewczyk.clients.user.enums.RelationshipStatus;
+import pl.mmilewczyk.clients.user.enums.RoleName;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public record UserResponseWithId(Long userId,
@@ -9,6 +12,8 @@ public record UserResponseWithId(Long userId,
                                  String email,
                                  String rank,
                                  String firstName,
+                                 String gender,
+                                 LocalDate birthday,
                                  String age,
                                  String currentCity,
                                  String homeTown,

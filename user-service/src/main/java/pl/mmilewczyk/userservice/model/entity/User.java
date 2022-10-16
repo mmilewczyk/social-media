@@ -143,6 +143,8 @@ public class User implements UserDetails {
                 this.email,
                 this.rank.name(),
                 this.firstName,
+                this.gender.name(),
+                this.birth,
                 calculateAge(this.birth),
                 this.currentCity,
                 this.homeTown,

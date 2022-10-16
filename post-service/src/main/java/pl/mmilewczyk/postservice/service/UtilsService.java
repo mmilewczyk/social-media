@@ -15,6 +15,7 @@ import pl.mmilewczyk.clients.user.UserClient;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -54,14 +55,26 @@ public record UtilsService(UserClient userClient, CommentClient commentClient, R
         return commentClient.getCommentById(id).getBody();
     }
 
+    //@CircuitBreaker(name = "getAllCommentsOfThePost", fallbackMethod = "getAllCommentsOfThePostFallback")
     List<CommentResponse> getAllCommentsOfThePost(Long id) {
         return commentClient.technicalGetAllCommentsOfThePost(id);
     }
 
+    public List<CommentResponse> getAllCommentsOfThePostFallback(Long id, Exception e) {
+        log.error("Primary get comments of the post by id {} request failed. Error was: {}", id, e.getMessage());
+        return new ArrayList<>();
+    }
+
+    //@CircuitBreaker(name = "deleteCommentById", fallbackMethod = "deleteCommentByIdFallback")
     void deleteCommentById(Long commentId) {
         commentClient.deleteCommentById(commentId);
     }
 
+    public void deleteCommentByIdFallback(Long commentId, Exception e) {
+        log.error("Primary delete comment by id {} request failed. Error was: {}", commentId, e.getMessage());
+    }
+
+    //@CircuitBreaker(name = "getFollowedUsersByUserId", fallbackMethod = "getFollowedUsersFallback")
     List<UserResponseWithId> getFollowedUsersByUserId(Long userId) {
         List<UserResponseWithId> followedUsersOfUserByUserId =
                 userClient.technicalGetFollowedUsersOfUserByUserId(userId);
@@ -69,5 +82,10 @@ public record UtilsService(UserClient userClient, CommentClient commentClient, R
             throw new NullPointerException("followedUsersOfUserByUserId response is null");
         }
         return followedUsersOfUserByUserId;
+    }
+
+    public List<UserResponseWithId> getFollowedUsersFallback(Long userId, Exception e) {
+        log.error("Primary get followed users by id {} request failed. Error was: {}", userId, e.getMessage());
+        return new ArrayList<>();
     }
 }

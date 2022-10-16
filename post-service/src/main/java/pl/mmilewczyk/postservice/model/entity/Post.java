@@ -11,8 +11,10 @@ import pl.mmilewczyk.postservice.model.dto.PostResponseLite;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import static java.time.format.DateTimeFormatter.ofPattern;
 import static javax.persistence.GenerationType.SEQUENCE;
 
 @Entity
@@ -46,20 +48,29 @@ public class Post {
         return new PostResponse(
                 this.getPostId(),
                 this.getTitle(),
+                authorId,
                 author.username(),
-                this.getCreatedAt(),
+                formatDate(getCreatedAt()),
                 this.getBody(),
                 this.getLikes(),
                 commentResponses);
     }
 
-    public PostResponseLite mapToPostResponseLite(UserResponseWithId author) {
+    public PostResponseLite mapToPostResponseLite(UserResponseWithId author, List<CommentResponse> commentResponses) {
+        commentsIds = commentResponses.stream().map(CommentResponse::commentId).toList();
         return new PostResponseLite(
                 this.getPostId(),
                 this.getTitle(),
+                authorId,
                 author.username(),
-                this.getCreatedAt(),
+                formatDate(getCreatedAt()),
                 this.getBody(),
-                this.getLikes());
+                this.getLikes(),
+                commentResponses.size());
+    }
+
+    private String formatDate(LocalDateTime dateTime) {
+        DateTimeFormatter formatter = ofPattern("dd/MM/yyyy HH:mm:ss");
+        return dateTime.format(formatter);
     }
 }

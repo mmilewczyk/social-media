@@ -14,6 +14,7 @@ import static org.springframework.http.ResponseEntity.ok;
 
 @Slf4j
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping(path = "api/v1/auth")
 public record AuthController(AuthService authService) {
 

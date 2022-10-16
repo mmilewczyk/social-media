@@ -31,12 +31,12 @@ public record FollowshipService(FollowshipRepository followshipRepository,
     }
 
     public Page<UserResponseWithId> getFollowedUsersOfUserByUserId(Long userId) {
-        List<UserResponseWithId> followers = followshipRepository.findFollowshipsByFollowingUser_UserId(userId)
+        List<UserResponseWithId> followed = followshipRepository.findFollowshipsByFollowingUser_UserId(userId)
                 .stream()
                 .map(Followship::getFollowedUser)
                 .map(User::mapToUserResponseWithId)
                 .toList();
-        return new PageImpl<>(followers);
+        return new PageImpl<>(followed);
     }
 
     public List<UserResponseWithId> technicalGetFollowedUsersOfUserByUserId(Long userId) {
@@ -53,6 +53,14 @@ public record FollowshipService(FollowshipRepository followshipRepository,
         User userToFollow = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND,
                         format("User with id: %s does not exist", userId)));
+        boolean isAlreadyFollowed = followshipRepository.findFollowshipsByFollowingUser_UserId(loggedInUser.getUserId()).stream()
+                .map(Followship::getFollowedUser)
+                .map(User::getUserId)
+                .toList()
+                .contains(userId);
+        if (isAlreadyFollowed || loggedInUser.getUserId().equals(userId)) {
+            return userToFollow.mapToUserResponseWithId();
+        }
 
         Followship followship = new Followship(loggedInUser, userToFollow);
         if (loggedInUser.getFollowedAmount() == null) {

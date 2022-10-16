@@ -1,11 +1,11 @@
 package pl.mmilewczyk.postservice.model.dto;
 
-import java.time.LocalDateTime;
-
 public record PostResponseLite(Long postId,
                                String title,
+                               Long authorId,
                                String authorUsername,
-                               LocalDateTime createdAt,
+                               String createdAt,
                                String body,
-                               Long likes) {
+                               Long likes,
+                               long comments) {
 }

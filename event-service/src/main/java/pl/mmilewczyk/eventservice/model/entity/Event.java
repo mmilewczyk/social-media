@@ -8,8 +8,10 @@ import pl.mmilewczyk.eventservice.model.dto.PrivateEventResponse;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import static java.time.format.DateTimeFormatter.ofPattern;
 import static javax.persistence.GenerationType.SEQUENCE;
 
 @Entity
@@ -72,8 +74,8 @@ public class Event {
         return new EventResponse(
                 this.eventId,
                 this.name,
-                this.startAt,
-                this.endAt,
+                formatDate(startAt),
+                formatDate(endAt),
                 this.location,
                 organizer,
                 this.isPrivate,
@@ -89,8 +91,8 @@ public class Event {
         return new PrivateEventResponse(
                 this.eventId,
                 this.name,
-                this.startAt,
-                this.endAt,
+                formatDate(startAt),
+                formatDate(endAt),
                 this.location,
                 organizer,
                 this.isPrivate,
@@ -99,6 +101,11 @@ public class Event {
                 (long) this.attendeesIds.size(),
                 (long) this.postsIds.size());
 
+    }
+
+    private String formatDate(LocalDateTime dateTime) {
+        DateTimeFormatter formatter = ofPattern("dd/MM/yyyy HH:mm");
+        return dateTime.format(formatter);
     }
 
     public boolean isUserAMemberOfEvent(UserResponseWithId userResponseWithId) {

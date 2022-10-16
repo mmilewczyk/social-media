@@ -12,7 +12,7 @@ import java.util.List;
 
 public record UserEditRequest(String username,
                               String firstName,
-                              @NotNull LocalDate birth,
+                              @NotNull LocalDate birthday,
                               @NotNull Gender gender,
                               @NotNull String currentCity,
                               @NotNull String homeTown,

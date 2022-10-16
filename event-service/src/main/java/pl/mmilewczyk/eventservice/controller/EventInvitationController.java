@@ -9,7 +9,8 @@ import pl.mmilewczyk.eventservice.model.dto.EventResponse;
 import pl.mmilewczyk.eventservice.model.dto.PrivateEventResponse;
 import pl.mmilewczyk.eventservice.service.EventInvitationService;
 
-import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.HttpStatus.ACCEPTED;
+import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.ResponseEntity.status;
 
 @RestController
@@ -21,13 +22,13 @@ public class EventInvitationController {
 
     @GetMapping
     public ResponseEntity<Page<EventInvitationRequest>> getCurrentUsersInvitationsToEvent() {
-        return status(FOUND).body(invitationService.getCurrentUsersInvitationsToEvent());
+        return status(OK).body(invitationService.getCurrentUsersInvitationsToEvent());
     }
 
     @PostMapping("/invite")
     public ResponseEntity<EventInvitationRequest> inviteSomeoneToEvent(@RequestParam Long eventId,
                                                                        @RequestParam Long userId) {
-        return status(CREATED).body(invitationService.inviteSomeoneToEvent(eventId, userId));
+        return status(OK).body(invitationService.inviteSomeoneToEvent(eventId, userId));
     }
 
     @PutMapping("/accept")

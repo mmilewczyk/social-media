@@ -1,11 +1,11 @@
 package pl.mmilewczyk.commentservice.model.dto;
 
-import java.time.LocalDateTime;
 
 public record CommentResponse(
         Long commentId,
+        Long authorId,
         String authorUsername,
-        LocalDateTime createdAt,
+        String createdAt,
         Boolean wasEdited,
         String body,
         Long likes) {

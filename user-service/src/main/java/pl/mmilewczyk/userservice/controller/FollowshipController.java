@@ -11,8 +11,9 @@ import java.util.List;
 import static org.springframework.http.ResponseEntity.ok;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("api/v1/users/profile")
-public record FriendshipController(FollowshipService followshipService) {
+public record FollowshipController(FollowshipService followshipService) {
 
     @PutMapping("/{userId}/follow")
     public ResponseEntity<UserResponseWithId> followOtherUserById(@PathVariable("userId") Long userId) {

@@ -9,7 +9,9 @@ import pl.mmilewczyk.commentservice.model.dto.CommentResponse;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
+import static java.time.format.DateTimeFormatter.ofPattern;
 import static javax.persistence.GenerationType.SEQUENCE;
 
 @Entity
@@ -37,7 +39,12 @@ public class Comment {
     private boolean wasEdited;
 
     public CommentResponse mapToCommentResponse(UserResponseWithId user) {
-        return new CommentResponse(this.commentId, user.username(), this.createdAt, this.wasEdited, this.body, this.likes);
+        return new CommentResponse(this.commentId, this.authorId, user.username(), formatDate(createdAt), this.wasEdited, this.body, this.likes);
+    }
+
+    private String formatDate(LocalDateTime dateTime) {
+        DateTimeFormatter formatter = ofPattern("dd/MM/yyyy HH:mm:ss");
+        return dateTime.format(formatter);
     }
 
     public boolean isComplete() {

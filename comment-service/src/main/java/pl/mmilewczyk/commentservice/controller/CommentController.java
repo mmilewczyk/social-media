@@ -13,6 +13,7 @@ import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.ResponseEntity.status;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping(path = "api/v1/comments")
 public record CommentController(CommentService commentService) {
 

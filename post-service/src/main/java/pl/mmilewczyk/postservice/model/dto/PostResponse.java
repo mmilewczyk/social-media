@@ -3,14 +3,14 @@ package pl.mmilewczyk.postservice.model.dto;
 
 import pl.mmilewczyk.clients.comment.CommentResponse;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public record PostResponse(
         Long postId,
         String title,
+        Long authorId,
         String authorUsername,
-        LocalDateTime createdAt,
+        String createdAt,
         String body,
         Long likes,
         List<CommentResponse> comments) {

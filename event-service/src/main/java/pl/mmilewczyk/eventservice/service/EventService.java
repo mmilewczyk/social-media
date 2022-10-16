@@ -1,6 +1,7 @@
 package pl.mmilewczyk.eventservice.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,6 @@ import pl.mmilewczyk.eventservice.model.entity.EventRequestToJoin;
 import pl.mmilewczyk.eventservice.repository.EventRepository;
 import pl.mmilewczyk.eventservice.repository.EventRequestToJoinRepository;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -25,12 +25,12 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
 import static org.springframework.http.HttpStatus.*;
 import static pl.mmilewczyk.eventservice.model.enums.Status.ACCEPTED;
 import static pl.mmilewczyk.eventservice.model.enums.Status.*;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class EventService {
 
@@ -41,14 +41,25 @@ public class EventService {
     private static final String EVENT_NOT_FOUND_ALERT = "The requested event with id %s was not found.";
     private static final String EVENT_REQUEST_TO_JOIN_NOT_FOUND_ALERT = "The requested event request to join with id %s was not found.";
 
+    public Page<PrivateEventResponse> getAllEvents() {
+        List<Event> events = eventRepository.findAll();
+        List<PrivateEventResponse> mappedEvents = mapEventsToPrivateEventResponseList(events);
+        return new PageImpl<>(mappedEvents);
+    }
+
     public Page<PrivateEventResponse> getEventByNameLike(String name) {
         List<Event> events = eventRepository.findAllByNameLikeIgnoreCase(name);
-        List<PrivateEventResponse> mappedEvents = new ArrayList<>();
+        List<PrivateEventResponse> mappedEvents = mapEventsToPrivateEventResponseList(events);
+        return new PageImpl<>(mappedEvents);
+    }
+
+    private List<PrivateEventResponse> mapEventsToPrivateEventResponseList(List<Event> events) {
+        List<PrivateEventResponse> mappedEvents = new LinkedList<>();
         events.forEach(event -> {
             UserResponseWithId user = utilsService.getUserById(event.getOrganizerId());
             mappedEvents.add(event.mapEventToPrivateEventResponse(user));
         });
-        return new PageImpl<>(mappedEvents);
+        return mappedEvents;
     }
 
     public EventResponse createNewEvent(EventRequest eventRequest) {
@@ -155,9 +166,11 @@ public class EventService {
                     format("You are already member of the event %s", eventId));
         }
         if (TRUE.equals(event.getIsPrivate())) {
+            log.info("User {} is trying to join to the private event {}", currentUser.userId(), eventId);
             requestToJoinToPrivateEvent(eventId);
             return getPrivateEventResponseById(eventId);
         } else {
+            log.info("User {} is trying to join to the event {}", currentUser.userId(), eventId);
             event.getAttendeesIds().add(currentUser.userId());
             eventRepository.save(event);
             return getEventResponseById(eventId);
@@ -249,13 +262,13 @@ public class EventService {
     private List<UserResponseWithId> getListOfUserResponsesByIds(List<Long> userIds) {
         return userIds.stream()
                 .map(utilsService::getUserById)
-                .collect(toList());
+                .toList();
     }
 
     private List<PostResponse> getListOfPostResponsesByIds(List<Long> postIds) {
         return postIds.stream()
                 .map(utilsService::getPostById)
-                .collect(toList());
+                .toList();
     }
 
     public Page<EventRequestToJoinResponse> getCurrentUsersRequestsToJoinToPrivateEvent() {
@@ -279,7 +292,7 @@ public class EventService {
         }
         List<EventRequestToJoin> eventRequestToJoinList = eventRequestToJoinRepository
                 .getEventRequestToJoinsByStatusAndEventId(PENDIND, eventId);
-        List<EventRequestToJoinResponse> responses = new ArrayList<>();
+        List<EventRequestToJoinResponse> responses = new LinkedList<>();
         eventRequestToJoinList.forEach(eventRequestToJoin -> {
             UserResponseWithId userJoining = utilsService.getUserById(eventRequestToJoin.getPersonJoiningId());
             responses.add(eventRequestToJoin.mapEventRequestToJoinToResponse(event, userJoining));

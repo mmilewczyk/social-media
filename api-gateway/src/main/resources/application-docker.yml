@@ -19,6 +19,12 @@ spring:
             - Path=/api/v1/posts/**
           filters:
             - AuthGatewayFilter
+        - id: comment-service
+          uri: lb://COMMENT-SERVICE
+          predicates:
+            - Path=/api/v1/comments/**
+          filters:
+            - AuthGatewayFilter
         - id: group-service
           uri: lb://GROUP-SERVICE
           predicates:

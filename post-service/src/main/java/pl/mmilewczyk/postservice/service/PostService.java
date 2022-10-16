@@ -133,7 +133,8 @@ public record PostService(PostRepository postRepository,
             List<PostResponseLite> mappedPosts = new LinkedList<>();
             posts.forEach(post -> {
                 UserResponseWithId user = utilsService.getUserById(post.getAuthorId());
-                mappedPosts.add(post.mapToPostResponseLite(user));
+                List<CommentResponse> commentResponses = utilsService.getAllCommentsOfThePost(post.getPostId());
+                mappedPosts.add(post.mapToPostResponseLite(user, commentResponses));
             });
             return mappedPosts;
         } else {

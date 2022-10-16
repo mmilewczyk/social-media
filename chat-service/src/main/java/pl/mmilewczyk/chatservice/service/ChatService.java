@@ -1,11 +1,8 @@
 package pl.mmilewczyk.chatservice.service;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import pl.mmilewczyk.chatservice.model.dto.ChatMessageDTO;
-import pl.mmilewczyk.chatservice.model.dto.EstablishedPrivateChatDTO;
 import pl.mmilewczyk.chatservice.model.dto.PrivateChatDTO;
 import pl.mmilewczyk.chatservice.model.entity.ChatMessage;
 import pl.mmilewczyk.chatservice.model.entity.PrivateChatChannel;
@@ -14,10 +11,10 @@ import pl.mmilewczyk.chatservice.repository.PrivateChatChannelRepository;
 import pl.mmilewczyk.clients.user.UserClient;
 import pl.mmilewczyk.clients.user.UserResponseWithId;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
+import static java.time.LocalDateTime.now;
 
 @Service
 public record ChatService(UserClient userClient,
@@ -31,35 +28,35 @@ public record ChatService(UserClient userClient,
         return (channel != null && !channel.isEmpty()) ? channel.get(0) : null;
     }
 
-    private Long newChatSession(PrivateChatDTO privateChatDTO) {
-        PrivateChatChannel channel = new PrivateChatChannel(
-                Objects.requireNonNull(userClient.getLoggedInUser().getBody()).userId(),
-                Objects.requireNonNull(userClient.getUserById(privateChatDTO.secondUserId()).getBody()).userId());
-        privateChatChannelRepository.save(channel);
-        return channel.getId();
-    }
+//    private Long newChatSession(PrivateChatDTO privateChatDTO) {
+//        PrivateChatChannel channel = new PrivateChatChannel(
+//                requireNonNull(userClient.().getBody()).userId(),
+//                requireNonNull(userClient.getUserById(privateChatDTO.secondUserId()).getBody()).userId());
+//        privateChatChannelRepository.save(channel);
+//        return channel.getId();
+//    }
 
-    public EstablishedPrivateChatDTO establishChatSession(PrivateChatDTO privateChatDTO) {
-        if (Objects.equals(privateChatDTO.firstUserId(), privateChatDTO.secondUserId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_ACCEPTABLE, "Users are the same");
-        }
-
-        PrivateChatChannel privateChat = getExistingChannel(privateChatDTO);
-
-        Long privateChatId = (privateChat != null) ? privateChat.getId() : newChatSession(privateChatDTO);
-        assert privateChat != null;
-        return new EstablishedPrivateChatDTO(
-                privateChatId,
-                Objects.requireNonNull(userClient.getUserById(privateChat.getFirstUserId()).getBody()).username(),
-                Objects.requireNonNull(userClient.getUserById(privateChat.getSecondUserId()).getBody()).username());
-    }
+//    public EstablishedPrivateChatDTO establishChatSession(PrivateChatDTO privateChatDTO) {
+//        if (Objects.equals(privateChatDTO.firstUserId(), privateChatDTO.secondUserId())) {
+//            throw new ResponseStatusException(NOT_ACCEPTABLE, "Users are the same");
+//        }
+//
+//        PrivateChatChannel privateChat = getExistingChannel(privateChatDTO);
+//
+//        Long privateChatId = (privateChat != null) ? privateChat.getId() : newChatSession(privateChatDTO);
+//        assert privateChat != null;
+//        return new EstablishedPrivateChatDTO(
+//                privateChatId,
+//                requireNonNull(userClient.getUserById(privateChat.getFirstUserId()).getBody()).username(),
+//                requireNonNull(userClient.getUserById(privateChat.getSecondUserId()).getBody()).username());
+//    }
 
     public void submitMessage(ChatMessageDTO chatMessageDTO) {
         ChatMessage chatMessage = new ChatMessage(
                 chatMessageDTO.authorId(),
                 chatMessageDTO.recipientId(),
                 chatMessageDTO.content(),
-                LocalDateTime.now());
+                now());
 
         chatMessageRepository.save(chatMessage);
 

@@ -21,6 +21,14 @@ spring:
       discovery:
         locator:
           enabled: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
       routes:
         - id: user-service
           uri: lb://USER-SERVICE
@@ -30,6 +38,12 @@ spring:
           uri: lb://POST-SERVICE
           predicates:
             - Path=/api/v1/posts/**
+          filters:
+            - AuthGatewayFilter
+        - id: comment-service
+          uri: lb://COMMENT-SERVICE
+          predicates:
+            - Path=/api/v1/comments/**
           filters:
             - AuthGatewayFilter
         - id: group-service

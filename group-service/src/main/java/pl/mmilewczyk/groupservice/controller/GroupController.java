@@ -15,6 +15,7 @@ import static org.springframework.http.ResponseEntity.status;
 
 @RestController
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 @RequestMapping(path = "api/v1/groups")
 public class GroupController {
 
@@ -32,12 +33,12 @@ public class GroupController {
 
     @GetMapping("/search/groupName")
     public ResponseEntity<Page<GroupResponseLite>> getGroupsByName(@RequestParam("groupName") String groupName) {
-        return status(FOUND).body(groupService.getGroupsByName(groupName));
+        return status(OK).body(groupService.getGroupsByName(groupName));
     }
 
     @GetMapping("/{groupId}")
     public ResponseEntity<GroupResponse> getGroupById(@PathVariable("groupId") Long groupId) {
-        return status(FOUND).body(groupService.getGroupResponseById(groupId));
+        return status(OK).body(groupService.getGroupResponseById(groupId));
     }
 
     @DeleteMapping("/{groupId}")

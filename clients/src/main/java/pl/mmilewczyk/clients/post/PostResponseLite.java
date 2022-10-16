@@ -1,10 +1,10 @@
 package pl.mmilewczyk.clients.post;
 
-import java.time.LocalDateTime;
-
 public record PostResponseLite(String title,
+                               Long authorId,
                                String authorUsername,
-                               LocalDateTime createdAt,
+                               String createdAt,
                                String body,
-                               Long likes) {
+                               Long likes,
+                               long comments) {
 }

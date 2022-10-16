@@ -75,7 +75,7 @@ public record UserService(UserRepository userRepository,
         log.debug("User with the username: {} has been found", userEditRequest.username());
         user.setUsername(userEditRequest.username());
         user.setFirstName(userEditRequest.firstName());
-        user.setBirth(userEditRequest.birth());
+        user.setBirth(userEditRequest.birthday());
         user.setGender(userEditRequest.gender());
         user.setCurrentCity(userEditRequest.currentCity());
         user.setHomeTown(userEditRequest.homeTown());
@@ -85,7 +85,10 @@ public record UserService(UserRepository userRepository,
             editedLanguagesISpeak = new ArrayList<>();
         }
         editedLanguagesISpeak.clear();
-        editedLanguagesISpeak.addAll(userEditRequest.languagesISpeak());
+
+        if (userEditRequest.languagesISpeak() != null && !userEditRequest.languagesISpeak().isEmpty()) {
+            editedLanguagesISpeak.addAll(userEditRequest.languagesISpeak());
+        }
         languageRepository.saveAll(editedLanguagesISpeak);
         user.setLanguagesISpeak(editedLanguagesISpeak);
 
@@ -94,7 +97,10 @@ public record UserService(UserRepository userRepository,
             editedLanguagesImLearning = new ArrayList<>();
         }
         editedLanguagesImLearning.clear();
-        editedLanguagesImLearning.addAll(userEditRequest.languagesImLearning());
+
+        if (userEditRequest.languagesImLearning() != null && !userEditRequest.languagesImLearning().isEmpty()) {
+            editedLanguagesImLearning.addAll(userEditRequest.languagesImLearning());
+        }
         languageRepository.saveAll(editedLanguagesImLearning);
         user.setLanguagesImLearning(editedLanguagesImLearning);
 

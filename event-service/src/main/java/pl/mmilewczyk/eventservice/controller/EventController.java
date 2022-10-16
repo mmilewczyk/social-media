@@ -28,7 +28,12 @@ public class EventController {
 
     @GetMapping
     public ResponseEntity<EventResponse> getEventById(@RequestParam Long eventId) {
-        return status(FOUND).body(eventService.getEventResponseById(eventId));
+        return status(OK).body(eventService.getEventResponseById(eventId));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<Page<PrivateEventResponse>> getAllEvents() {
+        return status(OK).body(eventService.getAllEvents());
     }
 
     @GetMapping("/tech/isUserAdminOrModerator")
@@ -43,7 +48,7 @@ public class EventController {
 
     @GetMapping("/{name}")
     public ResponseEntity<Page<PrivateEventResponse>> getEventByNameLike(@PathVariable("name") String name) {
-        return status(FOUND).body(eventService.getEventByNameLike(name));
+        return status(OK).body(eventService.getEventByNameLike(name));
     }
 
     @PostMapping
@@ -90,12 +95,12 @@ public class EventController {
 
     @GetMapping("/requests")
     public ResponseEntity<Page<EventRequestToJoinResponse>> getCurrentUsersRequestsToJoinToPrivateEvent() {
-        return status(FOUND).body(eventService.getCurrentUsersRequestsToJoinToPrivateEvent());
+        return status(OK).body(eventService.getCurrentUsersRequestsToJoinToPrivateEvent());
     }
 
     @GetMapping("/requests/{eventId}")
     public ResponseEntity<Page<EventRequestToJoinResponse>> getPendingRequestsToPrivateJoin(@PathVariable("eventId") Long eventId) {
-        return status(FOUND).body(eventService.getPendingRequestsToPrivateJoin(eventId));
+        return status(OK).body(eventService.getPendingRequestsToPrivateJoin(eventId));
     }
 
     @PostMapping("/requests")
@@ -114,7 +119,7 @@ public class EventController {
     }
 
     @PutMapping("{eventId}/create/post")
-    public ResponseEntity<EventResponse> addPostToGroup(@PathVariable("eventId") Long eventId,
+    public ResponseEntity<EventResponse> addPostToEvent(@PathVariable("eventId") Long eventId,
                                                         @RequestBody PostRequest postRequest) {
         return status(CREATED).body(eventService.addPostToEvent(eventId, postRequest));
     }

@@ -13,6 +13,7 @@ import static org.springframework.http.ResponseEntity.status;
 
 @RestController
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 @RequestMapping(path = "api/v1/groups/invitations")
 public class GroupInvitationController {
 
